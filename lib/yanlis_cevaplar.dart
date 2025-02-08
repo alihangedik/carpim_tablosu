@@ -1,195 +1,147 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'package:flutter/material.dart';
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'mainmenu.dart';
 
-class YanlisSorularSayfasi extends StatefulWidget {
-  @override
-  State<YanlisSorularSayfasi> createState() => _YanlisSorularSayfasiState();
-}
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
-class _YanlisSorularSayfasiState extends State<YanlisSorularSayfasi> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class YanlisSorularProvider extends ChangeNotifier {
   List<Map<String, dynamic>> _yanlisSorular = [];
 
+  List<Map<String, dynamic>> get yanlisSorular => _yanlisSorular;
+
+  // Yanlış soru ekleme metodu
+  Future<void> addYanlisSoru(Map<String, String> soru) async {
+    _yanlisSorular.add(soru);
+    await _saveYanlisSorularToPrefs();
+    notifyListeners();
+  }
+
+  // SharedPreferences'a soruları kaydetme
+  Future<void> _saveYanlisSorularToPrefs() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String jsonString = json.encode(_yanlisSorular); // Listeyi JSON formatında dönüştür
+    await prefs.setString('yanlisSorular', jsonString); // Veriyi shared_preferences'a kaydediyoruz
+  }
+
+  // SharedPreferences'tan soruları yükleme
+  Future<void> loadYanlisSorularFromPrefs() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? jsonString = prefs.getString('yanlisSorular'); // Veriyi String olarak alıyoruz
+
+    if (jsonString != null) {
+      // JSON string'i çözümle ve listeye dönüştür
+      List<dynamic> decodedList = json.decode(jsonString);
+      _yanlisSorular = decodedList.map((item) => Map<String, dynamic>.from(item)).toList();
+      notifyListeners();
+    }
+  }
+
+  // İşlem türüne göre filtreleme fonksiyonu
+  List<Map<String, dynamic>> filtreleByIslemTuru(String islemTuru) {
+    return _yanlisSorular.where((soru) => soru['kategori'] == islemTuru).toList();
+  }
+}
+class YanlisSorularTabView extends StatefulWidget {
+  @override
+  State<YanlisSorularTabView> createState() => _YanlisSorularTabViewState();
+}
+
+class _YanlisSorularTabViewState extends State<YanlisSorularTabView> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    _loadYanlisSorular();
-  }
-
-  // ✅ Yanlış Soruları SharedPreferences'tan Yükleme
-  Future<void> _loadYanlisSorular() async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String>? encodedList = prefs.getStringList('yanlisSorular');
-
-    if (encodedList != null) {
-      setState(() {
-        _yanlisSorular = encodedList.map((e) => jsonDecode(e) as Map<String, dynamic>).toList();
-      });
-    }
-  }
-
-  // ✅ Yanlış Soruları Kalıcı Olarak Saklama
-  Future<void> _saveYanlisSorular() async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String> encodedList = _yanlisSorular.map((e) => jsonEncode(e)).toList();
-    await prefs.setStringList('yanlisSorular', encodedList);
-  }
-
-  // ✅ Yanlış Soru Ekleme ve Güncelleme
-  Future<void> addYanlisSoru(Map<String, dynamic> yeniSoru) async {
-    setState(() {
-      _yanlisSorular.add(yeniSoru);
-    });
-    await _saveYanlisSorular();
-  }
-
-  // ✅ Yanlış Soruyu Silme
-  void _removeSoru(int index) {
-    setState(() {
-      _yanlisSorular.removeAt(index);
-    });
-    _saveYanlisSorular();
-  }
-
-  // ✅ Kategoriye Göre Yanlış Soruları Getir
-  List<Map<String, dynamic>> _getSorularByKategori(String kategori) {
-    return _yanlisSorular.where((soru) => soru['kategori'] == kategori).toList();
-  }
-
-  // ✅ Listeyi Oluşturma
-  Widget _buildSoruListesi(String kategori) {
-    List<Map<String, dynamic>> filtrelenmisSorular = _getSorularByKategori(kategori);
-
-    if (filtrelenmisSorular.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text("🎉", style: TextStyle(fontSize: 100)),
-            SizedBox(height: 20),
-            Text(
-              'Tebrikler! \nBu kategoride yanlışın yok!',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      itemCount: filtrelenmisSorular.length,
-      itemBuilder: (context, index) {
-        final soru = filtrelenmisSorular[index];
-        return Dismissible(
-          key: Key(soru['soru']),
-          direction: DismissDirection.startToEnd,
-          background: Container(
-            alignment: Alignment.centerRight,
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            color: Colors.green,
-            child: Row(
-              children: [
-                Icon(Icons.check, color: Colors.white, size: 30),
-                Text('Bu soruyu anladım', style: TextStyle(color: Colors.white, fontSize: 20)),
-              ],
-            ),
-          ),
-          onDismissed: (direction) {
-            _removeSoru(_yanlisSorular.indexOf(soru));
-          },
-          child: Card(
-            color: Color(0xff2d2e83),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            margin: EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '🧐 Soru: ${soru['soru']}',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
-                  SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(Icons.check, color: Colors.white),
-                      SizedBox(width: 8),
-                      Text(
-                        'Doğru Cevap: ${soru['dogruCevap']}',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Icon(Icons.close, color: Colors.white),
-                      SizedBox(width: 8),
-                      Text(
-                        'Senin Cevabın: ${soru['yanlisCevap']}',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
+    Provider.of<YanlisSorularProvider>(context, listen: false).loadYanlisSorularFromPrefs();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: Colors.white),
-          onPressed: () {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(
-                builder: (context) => Mainmenu(yanlisSorular: _yanlisSorular,),
-              ),
-                  (route) => false,
-            );
-          },
-        ),
-        backgroundColor: Color(0xff2d2e83),
-        iconTheme: IconThemeData(color: Colors.white),
-        title: Text(
-          'Yanlış Bilinen Sorular',
-          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-        ),
+        title: Text("Yanlış Sorular"),
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
           tabs: [
             Tab(text: "Toplama"),
             Tab(text: "Çıkarma"),
-            Tab(text: "Çarpma"),
             Tab(text: "Bölme"),
+            Tab(text: "Çarpma"),
           ],
         ),
       ),
       body: TabBarView(
+        physics: NeverScrollableScrollPhysics(),
         controller: _tabController,
         children: [
-          _buildSoruListesi("Toplama"),
-          _buildSoruListesi("Çıkarma"),
-          _buildSoruListesi("Çarpma"),
-          _buildSoruListesi("Bölme"),
+          // Toplama Soruları Sekmesi
+          Consumer<YanlisSorularProvider>(
+            builder: (context, provider, child) {
+              var sorular = provider.filtreleByIslemTuru("Toplama");
+              return ListView.builder(
+                itemCount: sorular.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text(sorular[index]['soru'] ?? ''),
+                    subtitle: Text('Yanlış Cevap: ${sorular[index]['yanlisCevap']} - Doğru Cevap: ${sorular[index]['dogruCevap']}'),
+                  );
+                },
+              );
+            },
+          ),
+          // Çıkarma Soruları Sekmesi
+          Consumer<YanlisSorularProvider>(
+            builder: (context, provider, child) {
+              var sorular = provider.filtreleByIslemTuru("Çıkarma");
+              return ListView.builder(
+                itemCount: sorular.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text(sorular[index]['soru'] ?? ''),
+                    subtitle: Text('Yanlış Cevap: ${sorular[index]['yanlisCevap']} - Doğru Cevap: ${sorular[index]['dogruCevap']}'),
+                  );
+                },
+              );
+            },
+          ),
+          // Bölme Soruları Sekmesi
+          Consumer<YanlisSorularProvider>(
+            builder: (context, provider, child) {
+              var sorular = provider.filtreleByIslemTuru("Bölme");
+              return ListView.builder(
+                itemCount: sorular.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text(sorular[index]['soru'] ?? ''),
+                    subtitle: Text('Yanlış Cevap: ${sorular[index]['yanlisCevap']} - Doğru Cevap: ${sorular[index]['dogruCevap']}'),
+                  );
+                },
+              );
+            },
+          ),
+          // Çarpma Soruları Sekmesi
+          Consumer<YanlisSorularProvider>(
+            builder: (context, provider, child) {
+              var sorular = provider.filtreleByIslemTuru("Çarpma");
+              return ListView.builder(
+                itemCount: sorular.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text(sorular[index]['soru'] ?? ''),
+                    subtitle: Text('Yanlış Cevap: ${sorular[index]['yanlisCevap']} - Doğru Cevap: ${sorular[index]['dogruCevap']}'),
+                  );
+                },
+              );
+            },
+          ),
         ],
       ),
     );

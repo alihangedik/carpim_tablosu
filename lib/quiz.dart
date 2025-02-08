@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:developer' as developer;
 import 'package:carpim_tablosu/mainmenu.dart';
+import 'package:carpim_tablosu/provider.dart';
 import 'package:carpim_tablosu/yanlis_cevaplar.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CalismaEkrani extends StatefulWidget {
@@ -155,10 +157,11 @@ class _CalismaEkraniState extends State<CalismaEkrani> {
   }
   void kontrolEt(int dogruCevap, String soruMetni, int yanlisCevap) {
     if (dogruCevap != yanlisCevap) {
-      addYanlisSoru({
+      final provider = Provider.of<YanlisSorularProvider>(context, listen: false);
+      provider.yanlisSorular.add({
         'soru': soruMetni,
-        'dogruCevap': dogruCevap,
-        'yanlisCevap': yanlisCevap,
+        'dogruCevap': dogruCevap.toString(),
+        'yanlisCevap': yanlisCevap.toString(),
         'kategori': currentIslemTuru,
       });
 
@@ -264,7 +267,7 @@ class _CalismaEkraniState extends State<CalismaEkrani> {
                 developer.log(yanlisSorular.toString());
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                      builder: (context) => YanlisSorularSayfasi()),
+                      builder: (context) => YanlisSorularTabView()),
                 );
 
               },

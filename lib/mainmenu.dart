@@ -66,168 +66,161 @@ class _MainmenuState extends State<Mainmenu> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        backgroundColor: Color(0xff2d2e83),
-        title: Text('Çarpım Tablosu', style: TextStyle(color: Colors.white)),
-        centerTitle: true,
-      ),
+
       body: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Color(0xff2d2e83),
         ),
         child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Stack(
             children: [
-              // Mevcut puan göstergesi
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    Image.asset("assets/carpim_tablosu.png", width: 320),
-                    SizedBox(height: 40),
-                    Text(
-                      'En Yüksek Puanın',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xff2d2e83),
+              Image.asset("assets/backgroud_image_2.png" , width: double.infinity, height: double.infinity, fit: BoxFit.cover,),
+              Center(
+                child: Container(
+                  height: 800,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Mevcut puan göstergesi
+                      Padding(
+                        padding: const EdgeInsets.only(top:  150.0),
+                        child: Image.asset("assets/carpim_tablosu.png", width: 300, color: Colors.white,),
                       ),
-                    ),
-                    SizedBox(height: 10),
-                    Text(
-                      '${widget.mevcutPuan}',
-                      style: TextStyle(
-                        fontSize: 50,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xff2d2e83),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 30),
 
-              // "Tekrar Oyna" Butonu
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xff2d2e83),
-                      padding:
-                          EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                    onPressed: () {
-                      int yeniPuan = 0;
-                      // Navigator.of(context).pushReplacement(
-                      //   MaterialPageRoute(builder: (context) => QuizEkrani(yeniPuan: yeniPuan,)),
-                      // );
+                      SizedBox(height: 120),
 
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                            builder: (context) => IslemTuruSecimEkrani()),
-                      );
-                    },
-                    child: Container(
-                      width: 180,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.play_arrow_rounded,
-                            size: 40,
-                            color: Colors.white,
-                          ),
-                          Text("Oyuna Başla",
-                              style:
-                                  TextStyle(fontSize: 20, color: Colors.white)),
-                        ],
+                      // "Tekrar Oyna" Butonu
+                      Container(
+
+                        height: 180,
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    padding:
+                                        EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    int yeniPuan = 0;
+                                    // Navigator.of(context).pushReplacement(
+                                    //   MaterialPageRoute(builder: (context) => QuizEkrani(yeniPuan: yeniPuan,)),
+                                    // );
+
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                          builder: (context) => IslemTuruSecimEkrani()),
+                                    );
+                                  },
+                                  child: Container(
+                                    width: 180,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.play_arrow_rounded,
+                                          size: 40,
+                                          color: Color(0xff2d2e83),
+                                        ),
+                                        Text("Oyuna Başla",
+                                            style:
+                                                TextStyle(fontSize: 20, color: Color(0xff2d2e83))),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 20),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    padding:
+                                        EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                          builder: (context) => CarpimTablosuSayfasi()),
+                                    );
+                                  },
+                                  child: Container(
+                                    width: 40,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.calculate_rounded,
+                                          size: 40,
+                                          color: Color(0xff2d2e83),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 2),
+                            Container(
+                              width: 300,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                ),
+                                child: Text("Yanlış Soruları Gör",
+                                    style: TextStyle(color: Color(0xff2d2e83))),
+                                onPressed: () {
+                                  var yanlisSorular = widget.yanlisSorular;
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) => YanlisSorularTabView(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text("Designed by", style: TextStyle(color: Colors.white54)),
+                                TextButton(
+                                  style: ButtonStyle(
+                                    backgroundColor:
+                                    WidgetStateProperty.all(Colors.transparent),
+                                    foregroundColor:
+                                    WidgetStateProperty.all(Colors.transparent),
+                                    shadowColor: WidgetStateProperty.all(Colors.transparent),
+                                    overlayColor: WidgetStateProperty.all(Colors.transparent),
+                                    padding: WidgetStateProperty.all(
+                                      EdgeInsets.only(left: 3),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    _launchUrl();
+                                  },
+                                  child: Container(
+                                      child: Text("@alihangedikcom",
+                                          style: TextStyle(color: Colors.white54))),
+                                )
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+
+                    ],
                   ),
-                  SizedBox(width: 20),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xff2d2e83),
-                      padding:
-                          EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                            builder: (context) => CarpimTablosuSayfasi()),
-                      );
-                    },
-                    child: Container(
-                      width: 40,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.calculate_rounded,
-                            size: 40,
-                            color: Colors.white,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 2),
-              Container(
-                width: 300,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xff2d2e83),
-                    padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                  child: Text("Yanlış Soruları Gör",
-                      style: TextStyle(color: Colors.white)),
-                  onPressed: () {
-                    var yanlisSorular = widget.yanlisSorular;
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => YanlisSorularSayfasi(),
-                      ),
-                    );
-                  },
                 ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text("Designed by", style: TextStyle(color: Colors.black54)),
-                  TextButton(
-                    style: ButtonStyle(
-                      backgroundColor:
-                          WidgetStateProperty.all(Colors.transparent),
-                      foregroundColor:
-                          WidgetStateProperty.all(Colors.transparent),
-                      shadowColor: WidgetStateProperty.all(Colors.transparent),
-                      overlayColor: WidgetStateProperty.all(Colors.transparent),
-                      padding: WidgetStateProperty.all(
-                        EdgeInsets.only(left: 3),
-                      ),
-                    ),
-                    onPressed: () {
-                      _launchUrl();
-                    },
-                    child: Container(
-                        child: Text("@alihangedikcom",
-                            style: TextStyle(color: Colors.black54))),
-                  )
-                ],
               ),
             ],
           ),
