@@ -1,61 +1,110 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer' as developer;
 import 'dart:math';
-
+import 'dart:developer' as developer;
+import 'package:carpim_tablosu/mainmenu.dart';
 import 'package:carpim_tablosu/yanlis_cevaplar.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'mainmenu.dart';
+class CalismaEkrani extends StatefulWidget {
+  final String islemTuru;
 
-class QuizEkrani extends StatefulWidget {
-  final int yeniPuan;
-
-  const QuizEkrani({super.key, required this.yeniPuan});
+  CalismaEkrani({required this.islemTuru});
 
   @override
-  _QuizEkraniState createState() => _QuizEkraniState();
+  _CalismaEkraniState createState() => _CalismaEkraniState();
 }
 
-class _QuizEkraniState extends State<QuizEkrani> {
-  Map<String, dynamic> mevcutSoru = {};
+class _CalismaEkraniState extends State<CalismaEkrani> {
   int puan = 0;
-  int highestScore = 0;
-  int kalanSure = 0; // Her soru için süre (saniye)
-  Timer? timer;
+  int kalanSure = 15;
+  Timer? _timer;
+  late String islemTuru;
+  late String currentIslemTuru;
+  late Map<String, dynamic> mevcutSoru;
   List<Map<String, dynamic>> yanlisSorular = [];
-  List secilenCevaplar = [];
+
+  // En yüksek skorlara ait değişkenler
+  int enYuksekToplamaSkor = 0;
+  int enYuksekCikarmaSkor = 0;
+  int enYuksekBolmeSkor = 0;
+  int enYuksekCarpmaSkor = 0;
 
   @override
   void initState() {
     super.initState();
+    islemTuru = widget.islemTuru;
+    currentIslemTuru = islemTuru;
+    _loadEnYuksekSkorlar();
     sonrakiSoru();
-    puan = widget.yeniPuan;
-    _loadHighestScore();
-    _loadYanlisSorular();
   }
 
-  @override
-  void dispose() {
-    timer?.cancel();
-    super.dispose();
-  }
+  void sonrakiSoru() {
+    // Zamanlayıcıyı sıfırla
+    _timer?.cancel();
+    kalanSure = 15;
 
-// En yüksek skoru cihaz hafızasından yükleme
-  Future<void> _loadHighestScore() async {
-    final prefs = await SharedPreferences.getInstance();
+    // Yeni soru ayarla
     setState(() {
-      highestScore = prefs.getInt('highestScore') ?? 0;
+      mevcutSoru = rastgeleSoruUret(islemTuru);
+    });
+
+    // Zamanlayıcı başlat
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      if (kalanSure > 0) {
+        setState(() {
+          kalanSure--;
+        });
+      } else {
+        // Süre doldu, bir sonraki soruya geç
+        timer.cancel();
+        sonrakiSoru();
+      }
     });
   }
 
-  // Yeni en yüksek skoru hafızaya kaydetme
-  Future<void> _saveHighestScore() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('highestScore', highestScore);
-  }
+  Map<String, dynamic> rastgeleSoruUret(String islemTuru) {
+    int sayi1 = Random().nextInt(10) + 1;
+    int sayi2 = Random().nextInt(10) + 1;
+    late String soru;
+    late int dogruCevap;
+    late List<int> cevaplar;
 
+    switch (islemTuru) {
+      case 'Toplama':
+        soru = '$sayi1 + $sayi2 = ?';
+        dogruCevap = sayi1 + sayi2;
+        break;
+      case 'Çıkarma':
+        soru = '$sayi1 - $sayi2 = ?';
+        dogruCevap = sayi1 - sayi2;
+        break;
+      case 'Bölme':
+        sayi1 = sayi2 * (Random().nextInt(9) + 1);
+        soru = '$sayi1 ÷ $sayi2 = ?';
+        dogruCevap = sayi1 ~/ sayi2;
+        break;
+      case 'Çarpma':
+        soru = '$sayi1 × $sayi2 = ?';
+        dogruCevap = sayi1 * sayi2;
+        break;
+      default:
+        soru = '';
+        dogruCevap = 0;
+    }
+
+    cevaplar = [dogruCevap];
+    while (cevaplar.length < 4) {
+      int yanlisCevap = Random().nextInt(20) + 1;
+      if (!cevaplar.contains(yanlisCevap)) {
+        cevaplar.add(yanlisCevap);
+      }
+    }
+    cevaplar.shuffle();
+
+    return {'soru': soru, 'cevaplar': cevaplar, 'dogruCevap': dogruCevap};
+  }
   Future<void> _loadYanlisSorular() async {
     final prefs = await SharedPreferences.getInstance();
     final List<String>? storedList = prefs.getStringList('yanlisSorular');
@@ -74,188 +123,222 @@ class _QuizEkraniState extends State<QuizEkrani> {
     await prefs.setStringList('yanlisSorular', encodedList);
   }
 
-  void sonrakiSoru() {
-    // Zamanlayıcıyı sıfırla
-    timer?.cancel();
-    kalanSure = 15;
-
-    // Yeni soru ayarla
+  void addYanlisSoru(Map<String, dynamic> soru) {
     setState(() {
-      mevcutSoru = rastgeleSoruUret();
-    });
-
-    // Zamanlayıcı başlat
-    timer = Timer.periodic(Duration(seconds: 1), (timer) {
-      if (kalanSure > 0) {
-        setState(() {
-          kalanSure--;
-        });
-      } else {
-        // Süre doldu, bir sonraki soruya geç
-        timer.cancel();
-        sonrakiSoru();
-      }
+      yanlisSorular.add(soru);
+      _saveYanlisSorular();
     });
   }
 
+  void cevapKontrol(int verilenCevap) {
+    if (verilenCevap == mevcutSoru['dogruCevap']) {
+      setState(() {
+        puan++;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: Colors.green,
+            content: Text(
+              'Doğru! Harikasın! 🎉',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 25),
+            ),
+            duration: Duration(milliseconds: 500),
+          ),
+        );
+      });
+    } else {
+      kontrolEt(mevcutSoru['dogruCevap'], mevcutSoru['soru'], verilenCevap);
+      // Yanlış cevap verildiğinde alert dialog aç
+      _showWrongAnswerDialog();
+    }
+    sonrakiSoru();
+  }
   void kontrolEt(int dogruCevap, String soruMetni, int yanlisCevap) {
     if (dogruCevap != yanlisCevap) {
-      yanlisSorular.add({
+      addYanlisSoru({
         'soru': soruMetni,
         'dogruCevap': dogruCevap,
         'yanlisCevap': yanlisCevap,
+        'kategori': currentIslemTuru,
       });
+
+
       _saveYanlisSorular();
     }
   }
-
-  void cevapKontrol(int secilenCevap) {
-    if (secilenCevap == mevcutSoru['dogruCevap']) {
-      setState(() {
-        puan++;
-        if (puan > highestScore) {
-          highestScore = puan;
-          _saveHighestScore();
-        }
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: Colors.green,
-          content: Text(
-            'Doğru! Harikasın! 🎉',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 25),
+  void _showWrongAnswerDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          actionsOverflowAlignment: OverflowBarAlignment.center,
+          // Butonları ortala
+          backgroundColor: Colors.white,
+          // Arka plan rengi
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20), // Yumuşak kenarlar
           ),
-          duration: Duration(milliseconds: 500),
-        ),
-      );
-    } else {
-      kontrolEt(mevcutSoru["dogruCevap"], mevcutSoru["soru"], secilenCevap);
-      developer.log("Yanlış sorular: $yanlisSorular");
-      showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        // false = kullanıcı dışarıya dokunarak dialogu kapatamaz
-        builder: (BuildContext dialogContext) {
-          kalanSure = 0;
-
-          timer?.cancel(); // Zamanlayıcıyı durdur
-
-          return AlertDialog(
-            actionsOverflowAlignment: OverflowBarAlignment.center,
-            // Butonları ortala
-            backgroundColor: Colors.white,
-            // Arka plan rengi
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20), // Yumuşak kenarlar
-            ),
-            title: Column(
-              children: [
-                Icon(
-                  Icons.error_outline_rounded,
-                  size: 50,
-                  color: Colors.redAccent, // İkon rengi
-                ),
-                SizedBox(height: 10),
-                Text(
-                  'Maalesef Yanlış!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.redAccent,
-                  ),
-                ),
-              ],
-            ),
-            content: Text(
-              'Tekrar denemek ister misin?',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-                color: Colors.black87,
+          title: Column(
+            children: [
+              Icon(
+                Icons.error_outline_rounded,
+                size: 50,
+                color: Colors.redAccent, // İkon rengi
               ),
-            ),
-            actionsAlignment: MainAxisAlignment.center,
-            // Butonları ortala
-            actions: <Widget>[
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green, // Buton arka plan rengi
-                  shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(15), // Yuvarlatılmış buton
-                  ),
+              SizedBox(height: 10),
+              Text(
+                'Maalesef Yanlış!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.redAccent,
                 ),
-                onPressed: () {
-                  setState(() {
-                    puan = 0;
-                  });
-                  Navigator.of(dialogContext).pop(); // Dialogu kapat
-                  setState(() {
-                    sonrakiSoru();
-                  });
-                },
-                child: Text(
-                  'Tekrar Dene',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                ),
-                onPressed: () {
-
-
-
-                  Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              Mainmenu(mevcutPuan: highestScore, yanlisSorular: yanlisSorular,)),
-                      (route) => false);
-                },
-                child: Text(
-                  'Ana Menü',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: Icon(
-                  Icons.question_mark,
-                  color: Colors.orangeAccent,
-                ),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                        builder: (context) => YanlisSorularSayfasi(
-                              yanlisSorular: yanlisSorular,
-                            )),
-                  );
-                },
               ),
             ],
-          );
-        },
-      );
+          ),
+          content: Text(
+            'Tekrar denemek ister misin?',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          // Butonları ortala
+          actions: <Widget>[
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green, // Buton arka plan rengi
+                shape: RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.circular(15), // Yuvarlatılmış buton
+                ),
+              ),
+              onPressed: () {
+
+                Navigator.of(context).pop(); // Dialogu kapat
+                setState(() {
+                  sonrakiSoru();
+                });
+              },
+              child: Text(
+                'Tekrar Dene',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                        builder: (context) => Mainmenu(mevcutPuan: puan, yanlisSorular: yanlisSorular,)),
+                    (route) => false);
+              },
+              child: Text(
+                'Ana Menü',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.question_mark,
+                color: Colors.orangeAccent,
+              ),
+              onPressed: () {
+                developer.log(yanlisSorular.toString());
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                      builder: (context) => YanlisSorularSayfasi()),
+                );
+
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // En yüksek skoru güncelleyen fonksiyon
+  void enYuksekSkoruKontrolEt() {
+    switch (currentIslemTuru) {
+      case 'Toplama':
+        if (puan > enYuksekToplamaSkor) {
+          setState(() {
+            enYuksekToplamaSkor = puan;
+          });
+          _saveEnYuksekSkor('toplama', enYuksekToplamaSkor);
+        }
+        break;
+      case 'Çıkarma':
+        if (puan > enYuksekCikarmaSkor) {
+          setState(() {
+            enYuksekCikarmaSkor = puan;
+          });
+          _saveEnYuksekSkor('cikarma', enYuksekCikarmaSkor);
+        }
+        break;
+      case 'Bölme':
+        if (puan > enYuksekBolmeSkor) {
+          setState(() {
+            enYuksekBolmeSkor = puan;
+          });
+          _saveEnYuksekSkor('bolme', enYuksekBolmeSkor);
+        }
+        break;
+      case 'Çarpma':
+        if (puan > enYuksekCarpmaSkor) {
+          setState(() {
+            enYuksekCarpmaSkor = puan;
+          });
+          _saveEnYuksekSkor('carpma', enYuksekCarpmaSkor);
+        }
+        break;
     }
-    sonrakiSoru();
+  }
+
+  Future<void> _loadEnYuksekSkorlar() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      enYuksekToplamaSkor = prefs.getInt('toplama') ?? 0;
+      enYuksekCikarmaSkor = prefs.getInt('cikarma') ?? 0;
+      enYuksekBolmeSkor = prefs.getInt('bolme') ?? 0;
+      enYuksekCarpmaSkor = prefs.getInt('carpma') ?? 0;
+    });
+  }
+
+  Future<void> _saveEnYuksekSkor(String islemTuru, int skor) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setInt(islemTuru, skor);
+  }
+
+  @override
+  void dispose() {
+    enYuksekSkoruKontrolEt();
+    _timer?.cancel();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    enYuksekSkoruKontrolEt();
+
     return Scaffold(
       appBar: AppBar(
 
@@ -312,7 +395,7 @@ class _QuizEkraniState extends State<QuizEkrani> {
                       // Buton arka plan rengi
                       shape: RoundedRectangleBorder(
                         borderRadius:
-                            BorderRadius.circular(15), // Yuvarlatılmış buton
+                        BorderRadius.circular(15), // Yuvarlatılmış buton
                       ),
                     ),
                     onPressed: () {
@@ -338,8 +421,8 @@ class _QuizEkraniState extends State<QuizEkrani> {
                       Navigator.of(context).pushAndRemoveUntil(
                           MaterialPageRoute(
                               builder: (context) =>
-                                  Mainmenu(mevcutPuan: highestScore , yanlisSorular: yanlisSorular,)),
-                          (route) => false);
+                                  Mainmenu(mevcutPuan: puan, yanlisSorular: yanlisSorular,)),
+                              (route) => false);
                     },
                     child: Text(
                       'Evet',
@@ -358,227 +441,187 @@ class _QuizEkraniState extends State<QuizEkrani> {
         title: Text('Çarpım Tablosu', style: TextStyle(color: Colors.white)),
         backgroundColor: Color(0xff2d2e83),
       ),
-      body: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-            ),
-            child: mevcutSoru.isEmpty
-                ? Center(child: CircularProgressIndicator())
-                : Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Süre göstergesi
-                        Container(
-                          alignment: Alignment.center,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Container(
-                                height: 100,
-                                width: 100,
-                                child: CircularProgressIndicator(
-                                  value: kalanSure / 15,
-                                  valueColor: AlwaysStoppedAnimation(
-                                    kalanSure > 3
-                                        ? Colors.green
-                                        : kalanSure > 1
-                                            ? Colors.orange
-                                            : Colors.red,
-                                  ),
-                                  strokeWidth: 10,
-                                  strokeCap: StrokeCap.round,
-                                ),
-                              ),
-                              Text(
-                                '$kalanSure',
-                                style: TextStyle(
-                                  fontSize: 40,
-                                  fontWeight: FontWeight.bold,
-                                  color: kalanSure > 3
-                                      ? Colors.green
-                                      : kalanSure > 1
-                                          ? Colors.orange
-                                          : Colors.red,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(height: 30),
-
-                        // Soru
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 80.0, top: 20),
-                          child: AnimatedSwitcher(
-                            duration: Duration(milliseconds: 100),
-                            transitionBuilder:
-                                (Widget child, Animation<double> animation) {
-                              return SlideTransition(
-
-                                position: Tween<Offset>(
-
-                                  begin:
-                                      Offset(0.0, 1.0), // Aşağıdan yukarı kayar
-                                  end: Offset.zero,
-                                ).animate(animation),
-                                child: child,
-                              );
-                            },
-                            child: Container(
-                              key: ValueKey(mevcutSoru['soru']),
-                              padding: EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Color(0xff2d2e83),
-                                borderRadius: BorderRadius.circular(20),
-
-                              ),
-                              child: Container(
-                                width: 250,
-                                child: Text(
-                                  mevcutSoru['soru'],
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 30,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        // Seçenekler
-                        ...mevcutSoru['cevaplar'].asMap().entries.map((entry) {
-                          int index = entry.key;
-                          int cevap = entry.value;
-
-                          return Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: Color(0xff2d2e83),
-                                  width: 0.5,
-                                ),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              width: 250,
-                              child: AnimatedContainer(
-                                duration: Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                                width: 250,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                      color:Color(0xff2d2e83), width: 1),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    padding: EdgeInsets.symmetric(
-                                        vertical: 8, horizontal: 32),
-                                  ),
-                                  onPressed: () {
-                                    timer?.cancel(); // Zamanlayıcıyı durdur
-                                    cevapKontrol(cevap);
-                                  },
-                                  child: Text(
-                                    '$cevap',
-                                    style: TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xff2d2e83),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                        SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "En Yüksek Puan: ",
-                              style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xff2d2e83)),
-                            ),
-                            Container(
-                              width: 30,
-                              child: Text(
-                                '$highestScore',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xff2d2e83),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        // Puan göstergesi
-                      ],
-                    ),
-                  ),
-          ),
-          Positioned(
-            right: 20,
-            top: 20,
-            child: Row(
-              children: [
-                Icon(
-                  Icons.star,
-                  color: Colors.orange,
-                  size: 30,
-                ),
-                SizedBox(width: 5),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Stack(
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                
                 Container(
-                  child: Text(
-                    '$puan',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xff2d2e83),
+                  alignment: Alignment.center,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        height: 100,
+                        width: 100,
+                        child: CircularProgressIndicator(
+                          value: kalanSure / 15,
+                          valueColor: AlwaysStoppedAnimation(
+                            kalanSure > 3
+                                ? Colors.green
+                                : kalanSure > 1
+                                    ? Colors.orange
+                                    : Colors.red,
+                          ),
+                          strokeWidth: 10,
+                          strokeCap: StrokeCap.round,
+                        ),
+                      ),
+                      Text(
+                        '$kalanSure',
+                        style: TextStyle(
+                          fontSize: 40,
+                          fontWeight: FontWeight.bold,
+                          color: kalanSure > 3
+                              ? Colors.green
+                              : kalanSure > 1
+                                  ? Colors.orange
+                                  : Colors.red,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 80.0, top: 20),
+                  child: AnimatedSwitcher(
+                    duration: Duration(milliseconds: 100),
+                    transitionBuilder: (Widget child, Animation<double> animation) {
+                      return SlideTransition(
+                        position: Tween<Offset>(
+                          begin: Offset(0.0, 1.0), // Aşağıdan yukarı kayar
+                          end: Offset.zero,
+                        ).animate(animation),
+                        child: child,
+                      );
+                    },
+                    child: Container(
+                      key: ValueKey(mevcutSoru['soru']),
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Color(0xff2d2e83),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Container(
+                        width: 250,
+                        child: Text(
+                          mevcutSoru['soru'],
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 30,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
+                ),
+                Column(
+                  children: List.generate(4, (index) {
+                    return Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Color(0xff2d2e83),
+                            width: 0.5,
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        width: 250,
+                        child: AnimatedContainer(
+                          duration: Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                          width: 250,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Color(0xff2d2e83), width: 1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              padding:
+                                  EdgeInsets.symmetric(vertical: 8, horizontal: 32),
+                            ),
+                            onPressed: () {
+                              _timer?.cancel(); // Zamanlayıcıyı durdur
+                              cevapKontrol(mevcutSoru['cevaplar'][index]);
+                            },
+                            child: Text(
+                              (mevcutSoru['cevaplar'][index]).toString(),
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xff2d2e83),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+                SizedBox(height: 20),
+                Text(
+                  'En Yüksek Skor: ${getEnYuksekSkor()}',
+                  style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.orange),
                 ),
               ],
             ),
-          ),
-        ],
+            Positioned(
+              right: 20,
+              top: 0,
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.star,
+                    color: Colors.orange,
+                    size: 30,
+                  ),
+                  SizedBox(width: 5),
+                  Container(
+                    child: Text(
+                      '$puan',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xff2d2e83),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
-}
 
-// Rastgele soru üretme fonksiyonu
-Map<String, dynamic> rastgeleSoruUret() {
-  int sayi1 = Random().nextInt(10) + 1;
-  int sayi2 = Random().nextInt(10) + 1;
-  int dogruCevap = sayi1 * sayi2;
-
-  List<int> cevaplar = [
-    dogruCevap,
-    Random().nextInt(100),
-    Random().nextInt(100),
-    Random().nextInt(100),
-  ]..shuffle();
-
-  return {
-    "soru": "$sayi1 x $sayi2 = ?",
-    "cevaplar": cevaplar,
-    "dogruCevap": dogruCevap,
-  };
+  String getEnYuksekSkor() {
+    switch (currentIslemTuru) {
+      case 'Toplama':
+        return enYuksekToplamaSkor.toString();
+      case 'Çıkarma':
+        return enYuksekCikarmaSkor.toString();
+      case 'Bölme':
+        return enYuksekBolmeSkor.toString();
+      case 'Çarpma':
+        return enYuksekCarpmaSkor.toString();
+      default:
+        return '0';
+    }
+  }
 }

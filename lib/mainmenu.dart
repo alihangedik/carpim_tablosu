@@ -6,18 +6,19 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'islem_secme.dart';
 
 class Mainmenu extends StatefulWidget {
   int? mevcutPuan;
   List<Map<String, dynamic>> yanlisSorular;
-  Mainmenu({this.mevcutPuan , required this.yanlisSorular});
+
+  Mainmenu({this.mevcutPuan, required this.yanlisSorular});
 
   @override
   State<Mainmenu> createState() => _MainmenuState();
 }
 
 class _MainmenuState extends State<Mainmenu> {
-
   // En yüksek skoru cihaz hafızasından yükleme
   Future<void> _loadHighestScore() async {
     final prefs = await SharedPreferences.getInstance();
@@ -38,18 +39,18 @@ class _MainmenuState extends State<Mainmenu> {
 
     if (storedList != null) {
       setState(() {
-        widget.yanlisSorular = storedList.map((e) => Map<String, dynamic>.from(jsonDecode(e))).toList();
+        widget.yanlisSorular = storedList
+            .map((e) => Map<String, dynamic>.from(jsonDecode(e)))
+            .toList();
       });
     }
   }
-
 
   @override
   void initState() {
     super.initState();
     _loadHighestScore();
     _loadYanlisSorular();
-
   }
 
   // Mevcut puanı ana menüye gönderiyoruz
@@ -57,13 +58,11 @@ class _MainmenuState extends State<Mainmenu> {
 
   @override
   Widget build(BuildContext context) {
-
     Future<void> _launchUrl() async {
       if (!await launchUrl(Uri.parse(_url))) {
         throw Exception('Could not launch $_url');
       }
     }
-
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -71,11 +70,10 @@ class _MainmenuState extends State<Mainmenu> {
         backgroundColor: Color(0xff2d2e83),
         title: Text('Çarpım Tablosu', style: TextStyle(color: Colors.white)),
         centerTitle: true,
-
       ),
       body: Container(
         decoration: BoxDecoration(
-         color: Colors.white,
+          color: Colors.white,
         ),
         child: Center(
           child: Column(
@@ -125,8 +123,13 @@ class _MainmenuState extends State<Mainmenu> {
                     ),
                     onPressed: () {
                       int yeniPuan = 0;
+                      // Navigator.of(context).pushReplacement(
+                      //   MaterialPageRoute(builder: (context) => QuizEkrani(yeniPuan: yeniPuan,)),
+                      // );
+
                       Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(builder: (context) => QuizEkrani(yeniPuan: yeniPuan,)),
+                        MaterialPageRoute(
+                            builder: (context) => IslemTuruSecimEkrani()),
                       );
                     },
                     child: Container(
@@ -184,20 +187,18 @@ class _MainmenuState extends State<Mainmenu> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xff2d2e83),
-                    padding:
-                    EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                    padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
                     ),
                   ),
-                  child: Text("Yanlış Soruları Gör", style: TextStyle(color: Colors.white)),
-                  onPressed:  () {
+                  child: Text("Yanlış Soruları Gör",
+                      style: TextStyle(color: Colors.white)),
+                  onPressed: () {
                     var yanlisSorular = widget.yanlisSorular;
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => YanlisSorularSayfasi(yanlisSorular: yanlisSorular ,
-
-                        ),
+                        builder: (context) => YanlisSorularSayfasi(),
                       ),
                     );
                   },
@@ -209,8 +210,10 @@ class _MainmenuState extends State<Mainmenu> {
                   Text("Designed by", style: TextStyle(color: Colors.black54)),
                   TextButton(
                     style: ButtonStyle(
-                      backgroundColor: WidgetStateProperty.all(Colors.transparent),
-                      foregroundColor: WidgetStateProperty.all(Colors.transparent),
+                      backgroundColor:
+                          WidgetStateProperty.all(Colors.transparent),
+                      foregroundColor:
+                          WidgetStateProperty.all(Colors.transparent),
                       shadowColor: WidgetStateProperty.all(Colors.transparent),
                       overlayColor: WidgetStateProperty.all(Colors.transparent),
                       padding: WidgetStateProperty.all(
@@ -226,7 +229,6 @@ class _MainmenuState extends State<Mainmenu> {
                   )
                 ],
               ),
-
             ],
           ),
         ),
