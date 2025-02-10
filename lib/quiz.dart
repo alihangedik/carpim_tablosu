@@ -342,117 +342,144 @@ class _CalismaEkraniState extends State<CalismaEkrani> {
   Widget build(BuildContext context) {
     enYuksekSkoruKontrolEt();
 
-    return Scaffold(
-      appBar: AppBar(
+    return Stack(
+      children: [Container(color: Color(0xff2d2e83)),
+        Positioned(bottom: -5, right: 0, left: 0, child: Opacity(opacity: 0.4, child: Image.asset("assets/backgroud_image_3.png" , width: 500,))),
 
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_rounded,
-            color: Colors.white,
-          ),
-          onPressed: () {
-            showDialog(
-              context: context,
-              builder: (dialogContext) => AlertDialog(
-                actionsOverflowAlignment: OverflowBarAlignment.center,
-                // Butonları ortala
-                backgroundColor: Colors.white,
-                // Arka plan rengi
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20), // Yumuşak kenarlar
-                ),
-                title: Column(
-                  children: [
-                    Icon(
-                      Icons.error_outline_rounded,
-                      size: 50,
-                      color: Colors.redAccent, // İkon rengi
+        Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+
+            leading: IconButton(
+              icon: Icon(
+                Icons.arrow_back_rounded,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (dialogContext) => AlertDialog(
+                    actionsOverflowAlignment: OverflowBarAlignment.center,
+                    // Butonları ortala
+                    backgroundColor: Colors.white,
+                    // Arka plan rengi
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20), // Yumuşak kenarlar
                     ),
-                    SizedBox(height: 10),
-                    Text(
-                      'Çıkış Yap',
+                    title: Column(
+                      children: [
+                        Icon(
+                          Icons.error_outline_rounded,
+                          size: 50,
+                          color: Colors.redAccent, // İkon rengi
+                        ),
+                        SizedBox(height: 10),
+                        Text(
+                          'Çıkış Yap',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.redAccent,
+                          ),
+                        ),
+                      ],
+                    ),
+                    content: Text(
+                      'Çıkmak istediğinize emin misin? Çıkarsanız puanlarınız kaybolacak.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.redAccent,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    actionsAlignment: MainAxisAlignment.center,
+                    // Butonları ortala
+                    actions: <Widget>[
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          // Buton arka plan rengi
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                            BorderRadius.circular(15), // Yuvarlatılmış buton
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop(); // Dialogu kapat
+                        },
+                        child: Text(
+                          'Hayır',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      Mainmenu(mevcutPuan: puan, yanlisSorular: yanlisSorular,)),
+                                  (route) => false);
+                        },
+                        child: Text(
+                          'Evet',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal:  30.0),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.star,
+                      color: Colors.orange,
+                      size: 30,
+                    ),
+                    SizedBox(width: 5),
+                    Container(
+                      child: Text(
+                        '$puan',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                content: Text(
-                  'Çıkmak istediğinize emin misin? Çıkarsanız puanlarınız kaybolacak.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
-                  ),
-                ),
-                actionsAlignment: MainAxisAlignment.center,
-                // Butonları ortala
-                actions: <Widget>[
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      // Buton arka plan rengi
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                        BorderRadius.circular(15), // Yuvarlatılmış buton
-                      ),
-                    ),
-                    onPressed: () {
-                      Navigator.of(dialogContext).pop(); // Dialogu kapat
-                    },
-                    child: Text(
-                      'Hayır',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.redAccent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  Mainmenu(mevcutPuan: puan, yanlisSorular: yanlisSorular,)),
-                              (route) => false);
-                    },
-                    child: Text(
-                      'Evet',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
               ),
-            );
-          },
-        ),
-        title: Text('Çarpım Tablosu', style: TextStyle(color: Colors.white)),
-        backgroundColor: Color(0xff2d2e83),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Stack(
-          children: [
-            Column(
+            ],
+            backgroundColor: Color(0xff2d2e83),
+          ),
+          body: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
-                
+
                 Container(
                   alignment: Alignment.center,
                   child: Stack(
@@ -465,10 +492,10 @@ class _CalismaEkraniState extends State<CalismaEkrani> {
                           value: kalanSure / 15,
                           valueColor: AlwaysStoppedAnimation(
                             kalanSure > 3
-                                ? Colors.green
+                                ? Colors.white
                                 : kalanSure > 1
-                                    ? Colors.orange
-                                    : Colors.red,
+                                    ? Colors.orangeAccent
+                                    : Colors.redAccent,
                           ),
                           strokeWidth: 10,
                           strokeCap: StrokeCap.round,
@@ -480,24 +507,24 @@ class _CalismaEkraniState extends State<CalismaEkrani> {
                           fontSize: 40,
                           fontWeight: FontWeight.bold,
                           color: kalanSure > 3
-                              ? Colors.green
+                              ? Colors.white
                               : kalanSure > 1
-                                  ? Colors.orange
-                                  : Colors.red,
+                                  ? Colors.orangeAccent
+                                  : Colors.redAccent,
                         ),
                       ),
                     ],
                   ),
                 ),
-                SizedBox(height: 20),
+                SizedBox(height: 60),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 80.0, top: 20),
                   child: AnimatedSwitcher(
-                    duration: Duration(milliseconds: 100),
+                    duration: Duration(milliseconds: 200),
                     transitionBuilder: (Widget child, Animation<double> animation) {
                       return SlideTransition(
                         position: Tween<Offset>(
-                          begin: Offset(0.0, 1.0), // Aşağıdan yukarı kayar
+                          begin: Offset(0.0, .5), // Aşağıdan yukarı kayar
                           end: Offset.zero,
                         ).animate(animation),
                         child: child,
@@ -507,7 +534,7 @@ class _CalismaEkraniState extends State<CalismaEkrani> {
                       key: ValueKey(mevcutSoru['soru']),
                       padding: EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Color(0xff2d2e83),
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Container(
@@ -518,7 +545,7 @@ class _CalismaEkraniState extends State<CalismaEkrani> {
                           style: TextStyle(
                             fontSize: 30,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: Color(0xff2d2e83),
                           ),
                         ),
                       ),
@@ -533,24 +560,26 @@ class _CalismaEkraniState extends State<CalismaEkrani> {
                         decoration: BoxDecoration(
                           border: Border.all(
                             color: Color(0xff2d2e83),
-                            width: 0.5,
+                            width: 0,
                           ),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         width: 250,
                         child: AnimatedContainer(
-                          duration: Duration(milliseconds: 300),
+                          duration: Duration(milliseconds: 1000),
                           curve: Curves.easeInOut,
                           width: 250,
                           decoration: BoxDecoration(
-                            border: Border.all(color: Color(0xff2d2e83), width: 1),
+                            border: Border.all(color: Color(0xff2d2e83), width: 0),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: ElevatedButton(
+
                             style: ElevatedButton.styleFrom(
+                              elevation: 0,
                               backgroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(16),
                               ),
                               padding:
                                   EdgeInsets.symmetric(vertical: 8, horizontal: 32),
@@ -579,37 +608,13 @@ class _CalismaEkraniState extends State<CalismaEkrani> {
                   style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.orange),
+                      color: Colors.white),
                 ),
               ],
             ),
-            Positioned(
-              right: 20,
-              top: 0,
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.star,
-                    color: Colors.orange,
-                    size: 30,
-                  ),
-                  SizedBox(width: 5),
-                  Container(
-                    child: Text(
-                      '$puan',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xff2d2e83),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 

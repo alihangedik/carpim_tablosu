@@ -74,7 +74,7 @@ class _MainmenuState extends State<Mainmenu> {
         child: Center(
           child: Stack(
             children: [
-              Image.asset("assets/backgroud_image_2.png" , width: double.infinity, height: double.infinity, fit: BoxFit.cover,),
+              Opacity( opacity: .4, child: Image.asset("assets/backgroud_image_2.png" ,  width: double.infinity, height: double.infinity, fit: BoxFit.cover,)),
               Center(
                 child: Container(
                   height: 800,

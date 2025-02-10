@@ -59,7 +59,7 @@ automaticallyImplyLeading: false,
       body: Center(
         child: Stack(
           children: [
-            Positioned(bottom: -10, right: 0, left: 0, child: Opacity(opacity: 0.4, child: Image.asset("assets/backgroud_image.png" , fit: BoxFit.cover,))),
+            Positioned(bottom: -10, right: 0, left: 0, child: Opacity(opacity: 0.4, child: Image.asset("assets/background_image.png" , fit: BoxFit.cover,))),
             Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[
