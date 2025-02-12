@@ -3,6 +3,7 @@ import 'package:carpim_tablosu/carpim_tablosu.dart';
 import 'package:carpim_tablosu/quiz.dart';
 import 'package:carpim_tablosu/yanlis_cevaplar.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -19,39 +20,10 @@ class Mainmenu extends StatefulWidget {
 }
 
 class _MainmenuState extends State<Mainmenu> {
-  // En yüksek skoru cihaz hafızasından yükleme
-  Future<void> _loadHighestScore() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      widget.mevcutPuan = prefs.getInt('highestScore') ?? 0;
-    });
-  }
 
-  // Yeni en yüksek skoru hafızaya kaydetme
-  Future<void> _saveHighestScore() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('highestScore', widget.mevcutPuan!);
-  }
 
-  Future<void> _loadYanlisSorular() async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String>? storedList = prefs.getStringList('yanlisSorular');
 
-    if (storedList != null) {
-      setState(() {
-        widget.yanlisSorular = storedList
-            .map((e) => Map<String, dynamic>.from(jsonDecode(e)))
-            .toList();
-      });
-    }
-  }
 
-  @override
-  void initState() {
-    super.initState();
-    _loadHighestScore();
-    _loadYanlisSorular();
-  }
 
   // Mevcut puanı ana menüye gönderiyoruz
   final String _url = 'https://instagram.com/alihangedikcom';
@@ -108,10 +80,6 @@ class _MainmenuState extends State<Mainmenu> {
                                     ),
                                   ),
                                   onPressed: () {
-                                    int yeniPuan = 0;
-                                    // Navigator.of(context).pushReplacement(
-                                    //   MaterialPageRoute(builder: (context) => QuizEkrani(yeniPuan: yeniPuan,)),
-                                    // );
 
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
@@ -130,12 +98,12 @@ class _MainmenuState extends State<Mainmenu> {
                                         ),
                                         Text("Oyuna Başla",
                                             style:
-                                                TextStyle(fontSize: 20, color: Color(0xff2d2e83))),
+                                                TextStyle(fontSize: 20, color: Color(0xff2d2e83) , fontWeight: FontWeight.bold)),
                                       ],
                                     ),
                                   ),
                                 ),
-                                SizedBox(width: 20),
+                                SizedBox(width: 10),
                                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.white,
@@ -157,7 +125,7 @@ class _MainmenuState extends State<Mainmenu> {
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
                                         Icon(
-                                          Icons.calculate_rounded,
+                                          Icons.question_mark_rounded,
                                           size: 40,
                                           color: Color(0xff2d2e83),
                                         ),
@@ -169,7 +137,7 @@ class _MainmenuState extends State<Mainmenu> {
                             ),
                             SizedBox(height: 2),
                             Container(
-                              width: 300,
+                              width: 295,
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,
@@ -179,9 +147,8 @@ class _MainmenuState extends State<Mainmenu> {
                                   ),
                                 ),
                                 child: Text("Yanlış Soruları Gör",
-                                    style: TextStyle(color: Color(0xff2d2e83))),
+                                    style: TextStyle(color: Color(0xff2d2e83) , fontWeight: FontWeight.bold)),
                                 onPressed: () {
-                                  var yanlisSorular = widget.yanlisSorular;
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
                                       builder: (context) => YanlisSorularTabView(),

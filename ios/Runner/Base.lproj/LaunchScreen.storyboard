@@ -19,14 +19,22 @@
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="dört_işlem_beyaz" translatesAutoresizingMaskIntoConstraints="NO" id="Eun-NW-9fl">
+                                <rect key="frame" x="81" y="355" width="231" height="142"/>
+                            </imageView>
                             <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" image="LaunchImage" translatesAutoresizingMaskIntoConstraints="NO" id="YRO-k0-Ey4">
                                 <rect key="frame" x="196.33333333333334" y="426" width="0.33333333333334281" height="0.33333333333331439"/>
                             </imageView>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="carpim_tablosu" translatesAutoresizingMaskIntoConstraints="NO" id="Eun-NW-9fl">
-                                <rect key="frame" x="81" y="355" width="231" height="142"/>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="alis_beyaz" translatesAutoresizingMaskIntoConstraints="NO" id="x5E-L4-15q">
+                                <rect key="frame" x="81" y="645" width="231" height="256"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
+                            <imageView hidden="YES" clipsSubviews="YES" userInteractionEnabled="NO" alpha="0.45000000000000001" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="card_background" translatesAutoresizingMaskIntoConstraints="NO" id="UzH-pa-AxM">
+                                <rect key="frame" x="-281" y="246" width="751" height="763"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
                         </subviews>
-                        <color key="backgroundColor" red="0.084822139025846163" green="0.090049765035480789" blue="0.25645920058585869" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <color key="backgroundColor" red="0.17089819910000001" green="0.18065753579999999" blue="0.51310771700000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstItem="Eun-NW-9fl" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="9XT-bg-25J"/>
                             <constraint firstItem="Eun-NW-9fl" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="B0m-P6-won"/>
@@ -44,6 +52,8 @@
     </scenes>
     <resources>
         <image name="LaunchImage" width="0.3333333432674408" height="0.3333333432674408"/>
-        <image name="carpim_tablosu" width="1771" height="693"/>
+        <image name="alis_beyaz" width="3001" height="3001"/>
+        <image name="card_background" width="1474" height="888"/>
+        <image name="dört_işlem_beyaz" width="1771" height="1063"/>
     </resources>
 </document>
