@@ -6,6 +6,7 @@ import 'package:carpim_tablosu/mainmenu.dart';
 import 'package:carpim_tablosu/provider.dart';
 import 'package:carpim_tablosu/yanlis_cevaplar.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -173,6 +174,7 @@ class _CalismaEkraniState extends State<CalismaEkrani> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        _timer?.cancel();
         return AlertDialog(
           actionsOverflowAlignment: OverflowBarAlignment.center,
           // Butonları ortala
