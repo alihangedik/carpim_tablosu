@@ -6,7 +6,9 @@ import 'package:carpim_tablosu/mainmenu.dart';
 import 'package:carpim_tablosu/provider.dart';
 import 'package:carpim_tablosu/yanlis_cevaplar.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -27,6 +29,7 @@ class _CalismaEkraniState extends State<CalismaEkrani> {
   late String currentIslemTuru;
   late Map<String, dynamic> mevcutSoru;
   List<Map<String, dynamic>> yanlisSorular = [];
+  bool isCorrect = false;
 
   // En yüksek skorlara ait değişkenler
   int enYuksekToplamaSkor = 0;
@@ -135,24 +138,62 @@ class _CalismaEkraniState extends State<CalismaEkrani> {
     if (verilenCevap == mevcutSoru['dogruCevap']) {
       setState(() {
         puan++;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: Colors.green,
-            content: Text(
-              'Doğru! Harikasın! 🎉',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 25),
+        showDialog(barrierDismissible: false, context: context, builder: (context) {
+
+          return Theme(
+            data: ThemeData(
+              dialogBackgroundColor: Colors.transparent, // Arka planı şeffaf yapıyoruz
             ),
-            duration: Duration(milliseconds: 500),
-          ),
-        );
+            child: AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20), // Yuvarlatılmış köşeler
+              ),
+              backgroundColor: Colors.white,
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Lottie.asset(
+                    'assets/correct.json',
+                    height: 150,
+                    repeat: false,
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    'Harika!',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 32,
+                      color: Color(0xff2d2e83),
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    'Doğru cevap verdin 🎉',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                  SizedBox(height: 15),
+
+                ],
+              ),
+            ),
+          );
+        });
+        _timer?.cancel();
+        Timer(Duration(milliseconds: 2000), (){
+          Navigator.pop(context);
+          sonrakiSoru();
+        });
+        isCorrect = !isCorrect;
       });
     } else {
       kontrolEt(mevcutSoru['dogruCevap'], mevcutSoru['soru'], verilenCevap,);
       // Yanlış cevap verildiğinde alert dialog aç
       _showWrongAnswerDialog();
     }
-    sonrakiSoru();
+
   }
   void kontrolEt(int dogruCevap, String soruMetni, int yanlisCevap) {
     if (dogruCevap != yanlisCevap) {
@@ -170,6 +211,7 @@ class _CalismaEkraniState extends State<CalismaEkrani> {
   }
   void _showWrongAnswerDialog() {
     showDialog(
+      barrierDismissible: false,
       context: context,
       builder: (BuildContext context) {
         _timer?.cancel();
@@ -186,7 +228,7 @@ class _CalismaEkraniState extends State<CalismaEkrani> {
               Icon(
                 Icons.error_outline_rounded,
                 size: 50,
-                color: Colors.redAccent, // İkon rengi
+                color: Color(0xff2d2e83), // İkon rengi
               ),
               SizedBox(height: 10),
               Text(
@@ -195,7 +237,7 @@ class _CalismaEkraniState extends State<CalismaEkrani> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.redAccent,
+                  color: Color(0xff2d2e83),
                 ),
               ),
             ],
@@ -214,7 +256,7 @@ class _CalismaEkraniState extends State<CalismaEkrani> {
           actions: <Widget>[
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green, // Buton arka plan rengi
+                backgroundColor: Color(0xff2d2e83), // Buton arka plan rengi
                 shape: RoundedRectangleBorder(
                   borderRadius:
                       BorderRadius.circular(15), // Yuvarlatılmış buton
@@ -227,18 +269,24 @@ class _CalismaEkraniState extends State<CalismaEkrani> {
                   sonrakiSoru();
                 });
               },
-              child: Text(
-                'Tekrar Dene',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.restart_alt_rounded , color: Colors.white,),
+                  Text(
+                    'Tekrar Dene',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
               ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
+                backgroundColor: Color(0xff2d2e83),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
                 ),
@@ -249,19 +297,27 @@ class _CalismaEkraniState extends State<CalismaEkrani> {
                         builder: (context) => Mainmenu(mevcutPuan: puan, yanlisSorular: yanlisSorular,)),
                     (route) => false);
               },
-              child: Text(
-                'Ana Menü',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Icon(Icons.home_filled, color: Colors.white,),
+
+                  Text(
+                    'Ana Menü',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
               ),
             ),
             IconButton(
               icon: Icon(
                 Icons.question_mark,
-                color: Colors.orangeAccent,
+                color: Color(0xff2d2e83),
               ),
               onPressed: () {
                setState(() {
