@@ -120,17 +120,15 @@ class _CalismaEkraniState extends State<CalismaEkrani> {
   }
 
 // Yanlış soruları hafızaya kaydetme
-  Future<void> _saveYanlisSorular() async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String> encodedList = yanlisSorular.map((e) => jsonEncode(e)).toList();
-    await prefs.setStringList('yanlisSorular', encodedList);
-  }
+  Future<void> saveYanlisSorularToPrefs() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
 
-  void addYanlisSoru(Map<String, dynamic> soru) {
-    setState(() {
-      yanlisSorular.add(soru);
-      _saveYanlisSorular();
-    });
+    // Her öğeyi JSON stringe çevir ve liste olarak kaydet
+    List<String> jsonList = yanlisSorular.map((item) => json.encode(item)).toList();
+
+    await prefs.setStringList('yanlisSorular', jsonList); // Listeyi SharedPreferences'a kaydet
+
+
   }
 
   void cevapKontrol(int verilenCevap) {
@@ -150,7 +148,7 @@ class _CalismaEkraniState extends State<CalismaEkrani> {
         );
       });
     } else {
-      kontrolEt(mevcutSoru['dogruCevap'], mevcutSoru['soru'], verilenCevap);
+      kontrolEt(mevcutSoru['dogruCevap'], mevcutSoru['soru'], verilenCevap,);
       // Yanlış cevap verildiğinde alert dialog aç
       _showWrongAnswerDialog();
     }
@@ -167,7 +165,7 @@ class _CalismaEkraniState extends State<CalismaEkrani> {
       });
 
 
-      _saveYanlisSorular();
+      provider.saveYanlisSorularToPrefs();
     }
   }
   void _showWrongAnswerDialog() {
@@ -266,7 +264,9 @@ class _CalismaEkraniState extends State<CalismaEkrani> {
                 color: Colors.orangeAccent,
               ),
               onPressed: () {
-                developer.log(yanlisSorular.toString());
+               setState(() {
+                 Provider.of<YanlisSorularProvider>(context, listen: false).loadYanlisSorularFromPrefs();
+               });
                 Navigator.of(context).push(
                   MaterialPageRoute(
                       builder: (context) => YanlisSorularTabView()),
