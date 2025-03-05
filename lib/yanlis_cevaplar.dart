@@ -151,9 +151,13 @@ class _YanlisSorularTabViewState extends State<YanlisSorularTabView>
                                 key: Key(soru['soru']),
                                 direction: DismissDirection.endToStart,
                                 onDismissed: (direction) {
-                                  provider._yanlisSorular.removeAt(index);
-                                  provider.saveYanlisSorularToPrefs();
-                                  setState(() {});
+                                  setState(() {
+                                    sorular.removeAt(index);
+                                    provider._yanlisSorular.removeAt(index);
+                                    provider.saveYanlisSorularToPrefs();
+                                  });
+
+
                                 },
                                 background: Container(
                                   color: Colors.green,
