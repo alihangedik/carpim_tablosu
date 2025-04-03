@@ -4,8 +4,8 @@ import 'package:carpim_tablosu/quiz.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-
+import 'package:google_fonts/google_fonts.dart';
+import './models/level_system.dart';
 
 class IslemTuruSecimEkrani extends StatefulWidget {
   @override
@@ -13,32 +13,135 @@ class IslemTuruSecimEkrani extends StatefulWidget {
 }
 
 class _IslemTuruSecimEkraniState extends State<IslemTuruSecimEkrani> {
-  int enYuksekToplamaSkor = 0;
-  int enYuksekCikarmaSkor = 0;
-  int enYuksekBolmeSkor = 0;
-  int enYuksekCarpmaSkor = 0;
+  Map<String, LevelSystem> levelSystems = {};
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
-    _loadEnYuksekSkorlar();
-    setState(() {
-      enYuksekToplamaSkor = 0;
-      enYuksekCikarmaSkor = 0;
-      enYuksekBolmeSkor = 0;
-      enYuksekCarpmaSkor = 0;
+    _loadLevelSystems();
+    // Her 2 saniyede bir seviye bilgilerini güncelle
+    _refreshTimer = Timer.periodic(Duration(seconds: 2), (timer) {
+      _loadLevelSystems();
     });
   }
 
-  // SharedPreferences'dan en yüksek skorları yükleyen fonksiyon
-  Future<void> _loadEnYuksekSkorlar() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      enYuksekToplamaSkor = prefs.getInt('toplama') ?? 0;
-      enYuksekCikarmaSkor = prefs.getInt('cikarma') ?? 0;
-      enYuksekBolmeSkor = prefs.getInt('bolme') ?? 0;
-      enYuksekCarpmaSkor = prefs.getInt('carpma') ?? 0;
-    });
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadLevelSystems() async {
+    final operations = {
+      'Toplama': 'toplama',
+      'Çıkarma': 'cikarma',
+      'Çarpma': 'carpma',
+      'Bölme': 'bolme'
+    };
+
+    for (var entry in operations.entries) {
+      try {
+        // İşlem türünü normalize et
+        String normalizedType = entry.value;
+        final levelSystem = await LevelSystem.loadLevelData(normalizedType);
+        print(
+            '${entry.key} seviyesi: ${levelSystem.currentLevel}'); // Debug için
+        if (mounted) {
+          setState(() {
+            levelSystems[entry.key] = levelSystem;
+          });
+        }
+      } catch (e) {
+        print('Seviye yükleme hatası (${entry.key}): $e');
+      }
+    }
+  }
+
+  Widget _buildOperationCard(String operation, IconData icon) {
+    final levelSystem = levelSystems[operation];
+    if (levelSystem == null) return Container();
+
+    // İşlem türünü küçük harfe çevir ve Türkçe karakterleri düzelt
+    String operationKey = operation
+        .toLowerCase()
+        .replaceAll('ç', 'c')
+        .replaceAll('ı', 'i')
+        .replaceAll('ö', 'o')
+        .replaceAll('ü', 'u');
+
+    return GestureDetector(
+      onTap: () async {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CalismaEkrani(islemTuru: operation),
+          ),
+        );
+        // Geri döndüğünde seviye bilgisini güncelle
+        _loadLevelSystems();
+      },
+      child: Container(
+        margin: EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 40,
+              color: Colors.white,
+            ),
+            SizedBox(height: 8),
+            Text(
+              operation,
+              style: GoogleFonts.quicksand(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Seviye',
+                    style: GoogleFonts.quicksand(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    '${levelSystem.currentLevel}',
+                    style: GoogleFonts.quicksand(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -46,198 +149,45 @@ class _IslemTuruSecimEkraniState extends State<IslemTuruSecimEkrani> {
     return Scaffold(
       backgroundColor: Color(0xff2d2e83),
       appBar: AppBar(
-automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-        title: Text('İşlem Türü Seç', style: TextStyle(color: Colors.white , fontSize: 20, fontWeight: FontWeight.bold)),
         backgroundColor: Color(0xff2d2e83),
-      ),
-      body: Center(
-        child: Stack(
-          children: [
-            Positioned(bottom: -10, right: 0, left: 0, child: Opacity(opacity: 0.4, child: Image.asset("assets/background_image.png" , fit: BoxFit.cover,))),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: <Widget>[
-                GridView(gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
-                  physics: NeverScrollableScrollPhysics(),
-                  padding: EdgeInsets.all(16),
-                  shrinkWrap: true,
-                  children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Color(0xff2d2e83),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    height: 150,
-                    width: 150,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        foregroundColor: Colors.transparent,
-                        overlayColor: Colors.transparent
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => CalismaEkrani(islemTuru: 'Toplama')),
-                        );
-                      },
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          FaIcon(FontAwesomeIcons.plus, color: Colors.white, size: 50),
-                          Text('Toplama İşlemi' , style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Icon(Icons.star, color: Colors.white, size: 20),
-                              Text('$enYuksekToplamaSkor', style: TextStyle(color: Colors.white, fontSize: 25 , fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Color(0xff2d2e83),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    height: 200,
-                    width: 200,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          foregroundColor: Colors.transparent,
-                          overlayColor: Colors.transparent
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => CalismaEkrani(islemTuru: 'Çıkarma')),
-                        );
-                      },
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          FaIcon(FontAwesomeIcons.minus, color: Colors.white, size: 50),
-                          Text('Çıkarma İşlemi' , style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Icon(Icons.star, color: Colors.white, size: 20),
-                              Text('$enYuksekCikarmaSkor', style: TextStyle(color: Colors.white, fontSize: 25 , fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Color(0xff2d2e83),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        height: 200,
-                        width: 200,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
-                              foregroundColor: Colors.transparent,
-                              overlayColor: Colors.transparent
-                          ),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => CalismaEkrani(islemTuru: 'Bölme')),
-                            );
-                          },
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                             FaIcon(FontAwesomeIcons.divide, color: Colors.white, size: 50),
-                              SizedBox(height: 10),
-                              Text('Bölme İşlemi' , style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.star, color: Colors.white, size: 20),
-                                  Text('$enYuksekBolmeSkor', style: TextStyle(color: Colors.white, fontSize: 25 , fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Color(0xff2d2e83),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        height: 200,
-                        width: 200,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
-                              foregroundColor: Colors.transparent,
-                              overlayColor: Colors.transparent
-                          ),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => CalismaEkrani(islemTuru: 'Çarpma')),
-                            );
-                          },
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              FaIcon(FontAwesomeIcons.close, color: Colors.white, size: 50),
-                              Text('Çarpma İşlemi' , style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.star, color: Colors.white, size: 20),
-                                  Text('$enYuksekCarpmaSkor', style: TextStyle(color: Colors.white, fontSize: 25 , fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                          ],
-                        ),
-
-                  ]),
-          ],
+        elevation: 0,
+        title: Text(
+          'İşlem Seçin',
+          style: GoogleFonts.quicksand(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-    ));
+      ),
+      body: Stack(
+        children: [
+          Positioned(
+            bottom: -5,
+            right: 0,
+            left: 0,
+            child: Opacity(
+              opacity: 0.4,
+              child: Image.asset(
+                "assets/backgroud_image_3.png",
+                width: 500,
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: GridView.count(
+              physics: NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              children: [
+                _buildOperationCard('Toplama', FontAwesomeIcons.plus),
+                _buildOperationCard('Çıkarma', FontAwesomeIcons.minus),
+                _buildOperationCard('Çarpma', FontAwesomeIcons.xmark),
+                _buildOperationCard('Bölme', FontAwesomeIcons.divide),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
-
-
-
