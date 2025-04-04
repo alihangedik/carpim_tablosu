@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io' show Platform;
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class SettingsScreen extends StatefulWidget {
   @override
@@ -17,6 +19,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   int _selectedTime = 30;
   String _appVersion = '';
   String _buildNumber = '';
+  bool _isLegalExpanded = false;
 
   @override
   void initState() {
@@ -72,7 +75,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         title: Text(
           'Ayarlar',
-          style: TextStyle(
+          style: GoogleFonts.quicksand(
             color: Colors.white,
             fontSize: 22,
             fontWeight: FontWeight.bold,
@@ -123,7 +126,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     Text(
                       'Tüm istatistikleriniz ve ilerlemeniz silinecektir.',
-                      style: TextStyle(
+                      style: GoogleFonts.quicksand(
                         color: Colors.white.withOpacity(0.7),
                         fontSize: 14,
                       ),
@@ -132,7 +135,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
               _buildSettingSection(
-                icon: Icons.contact_mail,
+                icon: FontAwesomeIcons.envelope,
                 title: 'İletişim',
                 child: Column(
                   children: [
@@ -140,33 +143,121 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       'GitHub',
                       'github.com/alihangedik',
                       'https://github.com/alihangedik',
-                      Icons.code,
+                      FontAwesomeIcons.github,
                     ),
                     Divider(color: Colors.white.withOpacity(0.1)),
                     _buildContactTile(
                       'LinkedIn',
                       'linkedin.com/in/alihangedik',
                       'https://linkedin.com/in/alihangedik',
-                      Icons.work,
+                      FontAwesomeIcons.linkedin,
                     ),
                     Divider(color: Colors.white.withOpacity(0.1)),
                     _buildContactTile(
                       'Instagram',
                       'instagram.com/alihangedikcom',
                       'https://instagram.com/alihangedikcom',
-                      Icons.camera,
+                      FontAwesomeIcons.instagram,
                     ),
                     Divider(color: Colors.white.withOpacity(0.1)),
                     _buildContactTile(
                       'E-posta',
                       'gedikhan44@gmail.com',
                       'mailto:gedikhan44@gmail.com',
-                      Icons.email,
+                      FontAwesomeIcons.solidEnvelope,
                     ),
                   ],
                 ),
               ),
               _buildTipSection(),
+              Container(
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(
+                    color: Colors.amber.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    InkWell(
+                      splashColor: Colors.transparent,
+                      highlightColor: Colors.transparent,
+                      onTap: () {
+                        setState(() {
+                          _isLegalExpanded = !_isLegalExpanded;
+                        });
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Yasal Bilgilendirme',
+                            style: GoogleFonts.quicksand(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                          FutureBuilder<bool>(
+                            future: SharedPreferences.getInstance().then(
+                              (prefs) =>
+                                  prefs.getBool('legal_consent_given') ?? false,
+                            ),
+                            builder: (context, snapshot) {
+                              if (snapshot.hasData && snapshot.data == true) {
+                                return Row(
+                                  children: [
+                                    Text(
+                                      'Kabul edildi',
+                                      style: GoogleFonts.quicksand(
+                                        fontSize: 14,
+                                        color: Colors.green[300],
+                                      ),
+                                    ),
+                                    SizedBox(width: 4),
+                                    Icon(
+                                      Icons.check_circle,
+                                      color: Colors.green[300],
+                                      size: 16,
+                                    ),
+                                  ],
+                                );
+                              }
+                              return SizedBox();
+                            },
+                          ),
+                          Icon(
+                            _isLegalExpanded
+                                ? Icons.keyboard_arrow_up
+                                : Icons.keyboard_arrow_down,
+                            color: Colors.white,
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (_isLegalExpanded) ...[
+                      SizedBox(height: 12),
+                      Text(
+                        'Bu uygulama, soruların oluşturulması ve performans değerlendirmelerinde yapay zeka teknolojisinden yararlanmaktadır. Kullanıcılar aşağıdaki koşulları kabul etmiş sayılır:\n\n'
+                        '• Yapay zeka tarafından üretilen içeriklerin ve değerlendirmelerin %100 doğruluğu garanti edilemez.\n\n'
+                        '• Uygulama içerisinde yapılan değerlendirmeler tavsiye niteliğindedir ve profesyonel eğitim danışmanlığının yerini tutmaz.\n\n'
+                        '• Kullanıcılar, yapay zeka sisteminin ürettiği içerikleri kontrol etmekle ve hatalı olduğunu düşündükleri durumları bildirmekle yükümlüdür.\n\n'
+                        '• Uygulama geliştiricisi, yapay zeka sisteminin ürettiği içeriklerden ve bu içeriklerin kullanımından doğabilecek herhangi bir zarardan sorumlu tutulamaz.',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 14,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              SizedBox(height: 20),
             ],
           ),
         ),
@@ -194,7 +285,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               Text(
                 title,
-                style: TextStyle(
+                style: GoogleFonts.quicksand(
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -363,30 +454,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
               color: Colors.white.withOpacity(0.05),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: DropdownButton<int>(
-              value: selectedAge,
-              icon: Icon(Icons.arrow_drop_down, color: Colors.white),
-              elevation: 2,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-              ),
-              dropdownColor: Color(0xff2d2e83),
-              isExpanded: true,
-              underline: Container(),
-              onChanged: (int? newValue) {
-                if (newValue != null) {
-                  setState(() {
-                    selectedAge = newValue;
-                    saveSettings();
-                  });
-                }
-              },
-              items: List<DropdownMenuItem<int>>.generate(
-                11,
-                (int index) => DropdownMenuItem<int>(
-                  value: index + 5,
-                  child: Text('${index + 5} yaş'),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<int>(
+                value: selectedAge,
+                icon: Container(
+                  padding: EdgeInsets.only(left: 8),
+                  child: Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                elevation: 2,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+                dropdownColor: Color(0xff2d2e83),
+                isExpanded: true,
+                onChanged: (int? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      selectedAge = newValue;
+                      saveSettings();
+                    });
+                  }
+                },
+                items: List<DropdownMenuItem<int>>.generate(
+                  11,
+                  (int index) => DropdownMenuItem<int>(
+                    value: index + 5,
+                    child: Text('${index + 5} yaş'),
+                  ),
                 ),
               ),
             ),
@@ -449,32 +548,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
               color: Colors.white.withOpacity(0.05),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: DropdownButton<String>(
-              value: selectedDifficulty,
-              icon: Icon(Icons.arrow_drop_down, color: Colors.white),
-              elevation: 2,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: selectedDifficulty,
+                icon: Container(
+                  padding: EdgeInsets.only(left: 8),
+                  child: Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                elevation: 2,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+                dropdownColor: Color(0xff2d2e83),
+                isExpanded: true,
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      selectedDifficulty = newValue;
+                      saveSettings();
+                    });
+                  }
+                },
+                items: ['Kolay', 'Orta', 'Zor']
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
               ),
-              dropdownColor: Color(0xff2d2e83),
-              isExpanded: true,
-              underline: Container(),
-              onChanged: (String? newValue) {
-                if (newValue != null) {
-                  setState(() {
-                    selectedDifficulty = newValue;
-                    saveSettings();
-                  });
-                }
-              },
-              items: ['Kolay', 'Orta', 'Zor']
-                  .map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
             ),
           );
   }
@@ -537,10 +644,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           saveSettings();
                         });
                       },
-                      children: [15, 30, 45, 60].map((int value) {
+                      children: [15, 30, 45, 60].map((int time) {
                         return Center(
                           child: Text(
-                            '$value saniye',
+                            '$time saniye',
                             style: const TextStyle(
                               fontSize: 16,
                               color: Colors.white,
@@ -560,31 +667,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
               color: Colors.white.withOpacity(0.05),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: DropdownButton<int>(
-              value: _selectedTime,
-              icon: Icon(Icons.arrow_drop_down, color: Colors.white),
-              elevation: 2,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<int>(
+                value: _selectedTime,
+                icon: Container(
+                  padding: EdgeInsets.only(left: 8),
+                  child: Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                elevation: 2,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+                dropdownColor: Color(0xff2d2e83),
+                isExpanded: true,
+                onChanged: (int? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      _selectedTime = newValue;
+                      saveSettings();
+                    });
+                  }
+                },
+                items: [15, 30, 45, 60].map<DropdownMenuItem<int>>((int value) {
+                  return DropdownMenuItem<int>(
+                    value: value,
+                    child: Text('$value saniye'),
+                  );
+                }).toList(),
               ),
-              dropdownColor: Color(0xff2d2e83),
-              isExpanded: true,
-              underline: Container(),
-              onChanged: (int? newValue) {
-                if (newValue != null) {
-                  setState(() {
-                    _selectedTime = newValue;
-                    saveSettings();
-                  });
-                }
-              },
-              items: [15, 30, 45, 60].map<DropdownMenuItem<int>>((int value) {
-                return DropdownMenuItem<int>(
-                  value: value,
-                  child: Text('$value saniye'),
-                );
-              }).toList(),
             ),
           );
   }
@@ -612,9 +727,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             Icon(
-              CupertinoIcons.chevron_down,
+              Icons.keyboard_arrow_down_rounded,
               color: Colors.white,
-              size: 20,
+              size: 24,
             ),
           ],
         ),

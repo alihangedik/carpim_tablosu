@@ -1,130 +1,148 @@
+import 'dart:convert';
+import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LevelSystem {
-  final String operationType; // İşlem türü (toplama, çıkarma, çarpma, bölme)
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
   int currentLevel;
   int currentXP;
   int requiredXP;
-  static const int MAX_LEVEL = 50; // Maksimum seviye sınırı
-  static const int BASE_XP = 100; // Temel XP miktarı
-  static const double XP_MULTIPLIER = 1.5; // XP artış çarpanı
-
-  // Her seviye için gereken XP miktarı formülü
-  static int calculateRequiredXP(int level) {
-    if (level <= 0) return BASE_XP;
-    if (level > MAX_LEVEL) return calculateRequiredXP(MAX_LEVEL);
-    return (BASE_XP * level * XP_MULTIPLIER).round();
-  }
+  bool hasLeveledUp;
+  String operationType;
+  double xpMultiplier;
 
   LevelSystem({
-    required this.operationType,
     this.currentLevel = 1,
     this.currentXP = 0,
-  }) : requiredXP = calculateRequiredXP(1);
+    this.requiredXP = 100,
+    this.hasLeveledUp = false,
+    this.operationType = '',
+    this.xpMultiplier = 1.0,
+  });
 
-  // XP Kazanma
-  bool gainXP(int amount) {
-    if (amount <= 0) return false; // Negatif veya 0 XP kazanımını engelle
-    if (currentLevel >= MAX_LEVEL) {
-      currentXP = requiredXP; // Max seviyede XP'yi dolu tut
-      saveLevelData();
-      return false;
-    }
-
-    bool leveledUp = false;
-    currentXP += amount;
-
-    // Seviye atlama kontrolü
-    if (currentXP >= requiredXP) {
-      leveledUp = true;
-      levelUp();
-    }
-
-    // XP'yi kaydet
-    saveLevelData();
-    return leveledUp;
-  }
-
-  // Seviye Atlama
-  void levelUp() {
-    if (currentLevel >= MAX_LEVEL) return;
-
-    currentXP -= requiredXP;
-    currentLevel++;
-    requiredXP = calculateRequiredXP(currentLevel);
-
-    // Eğer son seviyeye ulaştıysak, XP'yi maksimumda tut
-    if (currentLevel >= MAX_LEVEL) {
-      currentXP = requiredXP;
-    }
-  }
-
-  // İlerleme yüzdesi
-  double getProgress() {
-    if (currentLevel >= MAX_LEVEL) return 1.0;
-    return currentXP / requiredXP;
-  }
-
-  // Seviye bilgilerini kaydetme
-  Future<void> saveLevelData() async {
+  Future<void> loadLevel(String operationType) async {
+    this.operationType = operationType;
     final prefs = await SharedPreferences.getInstance();
-    String normalizedType = operationType
-        .toLowerCase()
-        .replaceAll('ç', 'c')
-        .replaceAll('ı', 'i')
-        .replaceAll('ö', 'o')
-        .replaceAll('ü', 'u');
+    final key = 'level_${operationType.toLowerCase()}';
 
-    await prefs.setInt('${normalizedType}_level', currentLevel);
-    await prefs.setInt('${normalizedType}_xp', currentXP);
-    await prefs.setInt('${normalizedType}_required_xp', requiredXP);
+    final Map<String, dynamic>? levelData =
+        json.decode(prefs.getString(key) ?? '{}') as Map<String, dynamic>?;
+
+    if (levelData != null) {
+      currentLevel = levelData['level'] ?? 1;
+      currentXP = levelData['xp'] ?? 0;
+      requiredXP = levelData['requiredXP'] ?? 100;
+      xpMultiplier = levelData['xpMultiplier'] ?? 1.0;
+    }
   }
 
-  // Seviye bilgilerini yükleme
-  static Future<LevelSystem> loadLevelData(String operationType) async {
+  Future<void> saveLevel() async {
     final prefs = await SharedPreferences.getInstance();
-    String normalizedType = operationType
-        .toLowerCase()
-        .replaceAll('ç', 'c')
-        .replaceAll('ı', 'i')
-        .replaceAll('ö', 'o')
-        .replaceAll('ü', 'u');
+    final key = 'level_${operationType.toLowerCase()}';
 
-    final level = prefs.getInt('${normalizedType}_level') ?? 1;
-    final xp = prefs.getInt('${normalizedType}_xp') ?? 0;
+    await prefs.setString(
+        key,
+        json.encode({
+          'level': currentLevel,
+          'xp': currentXP,
+          'requiredXP': requiredXP,
+          'xpMultiplier': xpMultiplier,
+        }));
+  }
 
-    // Seviye sınırlaması
-    final adjustedLevel = level.clamp(1, MAX_LEVEL);
+  Future<void> addExperience(int xp) async {
+    hasLeveledUp = false;
+    currentXP += (xp * xpMultiplier).round();
 
-    LevelSystem system = LevelSystem(
-      operationType: operationType,
-      currentLevel: adjustedLevel,
-      currentXP: xp,
-    );
-
-    // requiredXP'yi mevcut seviyeye göre güncelle
-    system.requiredXP = calculateRequiredXP(adjustedLevel);
-
-    // Max seviyede XP'yi dolu tut
-    if (system.currentLevel >= MAX_LEVEL) {
-      system.currentXP = system.requiredXP;
+    while (currentXP >= requiredXP) {
+      currentXP -= requiredXP;
+      currentLevel++;
+      requiredXP = (requiredXP * 1.5).round();
+      xpMultiplier += 0.1;
+      hasLeveledUp = true;
     }
 
-    return system;
+    await saveLevel();
   }
 
-  // Seviye ödüllerini kontrol etme
+  Future<void> removeExperience(int xp) async {
+    currentXP = max(0, currentXP - xp); // XP'nin 0'ın altına düşmemesini sağla
+    await saveLevel();
+  }
+
   Map<String, dynamic> getLevelRewards() {
-    // Maksimum değerler
-    const int MAX_NUMBER = 100;
-    const int MAX_TIME_BONUS = 10;
-    const double MAX_XP_MULTIPLIER = 3.0;
-
     return {
-      'maxNumber': (10 + (currentLevel * 2)).clamp(10, MAX_NUMBER),
-      'timeBonus': (currentLevel / 5).floor().clamp(0, MAX_TIME_BONUS),
-      'xpMultiplier': (1 + (currentLevel / 10)).clamp(1.0, MAX_XP_MULTIPLIER),
-      'isMaxLevel': currentLevel >= MAX_LEVEL,
+      'xpMultiplier': xpMultiplier,
+      'isMaxLevel': currentLevel >= 50,
     };
+=======
+  int currentLevel = 1;
+  int currentXP = 0;
+  bool hasLeveledUp = false;
+  final int maxLevel = 50;
+
+  Future<void> loadLevel(String islemTuru) async {
+    final prefs = await SharedPreferences.getInstance();
+    currentLevel = prefs.getInt('level_${islemTuru.toLowerCase()}') ?? 1;
+    currentXP = prefs.getInt('xp_${islemTuru.toLowerCase()}') ?? 0;
+    hasLeveledUp = false;
+  }
+
+=======
+  int currentLevel = 1;
+  int currentXP = 0;
+  bool hasLeveledUp = false;
+  final int maxLevel = 50;
+
+  Future<void> loadLevel(String islemTuru) async {
+    final prefs = await SharedPreferences.getInstance();
+    currentLevel = prefs.getInt('level_${islemTuru.toLowerCase()}') ?? 1;
+    currentXP = prefs.getInt('xp_${islemTuru.toLowerCase()}') ?? 0;
+    hasLeveledUp = false;
+  }
+
+>>>>>>> Stashed changes
+  Future<void> saveLevel(String islemTuru) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('level_${islemTuru.toLowerCase()}', currentLevel);
+    await prefs.setInt('xp_${islemTuru.toLowerCase()}', currentXP);
+  }
+
+  int getRequiredXP(int level) {
+    return (100 * level * (1 + (level - 1) * 0.1)).round();
+  }
+
+  Future<void> addExperience(int xp) async {
+    if (currentLevel >= maxLevel) return;
+
+    currentXP += xp;
+    int requiredXP = getRequiredXP(currentLevel);
+
+    while (currentXP >= requiredXP && currentLevel < maxLevel) {
+      currentXP -= requiredXP;
+      currentLevel++;
+      hasLeveledUp = true;
+      requiredXP = getRequiredXP(currentLevel);
+    }
+
+    if (currentLevel >= maxLevel) {
+      currentLevel = maxLevel;
+      currentXP = 0;
+    }
+  }
+
+  Future<void> removeExperience(int xp) async {
+    currentXP -= xp;
+    if (currentXP < 0) currentXP = 0;
+  }
+
+  double getProgress() {
+    if (currentLevel >= maxLevel) return 1.0;
+    return currentXP / getRequiredXP(currentLevel);
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
   }
 }

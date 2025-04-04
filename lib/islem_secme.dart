@@ -19,7 +19,7 @@ class _IslemTuruSecimEkraniState extends State<IslemTuruSecimEkrani> {
   @override
   void initState() {
     super.initState();
-    _loadLevelSystems();
+    _initializeLevelSystems();
     // Her 2 saniyede bir seviye bilgilerini güncelle
     _refreshTimer = Timer.periodic(Duration(seconds: 2), (timer) {
       _loadLevelSystems();
@@ -32,6 +32,21 @@ class _IslemTuruSecimEkraniState extends State<IslemTuruSecimEkrani> {
     super.dispose();
   }
 
+  Future<void> _initializeLevelSystems() async {
+    final operations = {
+      'Toplama': 'toplama',
+      'Çıkarma': 'cikarma',
+      'Çarpma': 'carpma',
+      'Bölme': 'bolme'
+    };
+
+    for (var entry in operations.entries) {
+      final levelSystem = LevelSystem();
+      levelSystems[entry.key] = levelSystem;
+    }
+    await _loadLevelSystems();
+  }
+
   Future<void> _loadLevelSystems() async {
     final operations = {
       'Toplama': 'toplama',
@@ -42,15 +57,13 @@ class _IslemTuruSecimEkraniState extends State<IslemTuruSecimEkrani> {
 
     for (var entry in operations.entries) {
       try {
-        // İşlem türünü normalize et
         String normalizedType = entry.value;
-        final levelSystem = await LevelSystem.loadLevelData(normalizedType);
-        print(
-            '${entry.key} seviyesi: ${levelSystem.currentLevel}'); // Debug için
+        if (!levelSystems.containsKey(entry.key)) {
+          levelSystems[entry.key] = LevelSystem();
+        }
+        await levelSystems[entry.key]!.loadLevel(normalizedType);
         if (mounted) {
-          setState(() {
-            levelSystems[entry.key] = levelSystem;
-          });
+          setState(() {});
         }
       } catch (e) {
         print('Seviye yükleme hatası (${entry.key}): $e');
@@ -75,7 +88,7 @@ class _IslemTuruSecimEkraniState extends State<IslemTuruSecimEkrani> {
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CalismaEkrani(islemTuru: operation),
+            builder: (context) => Quiz(islemTuru: operation),
           ),
         );
         // Geri döndüğünde seviye bilgisini güncelle

@@ -1,203 +1,177 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lottie/lottie.dart';
 
-class LevelUpScreen extends StatefulWidget {
-  final int newLevel;
-  final String operationType;
-  final Map<String, dynamic> rewards;
+class LevelUpScreen extends StatelessWidget {
+  final int level;
+  final VoidCallback onContinue;
 
   const LevelUpScreen({
     Key? key,
-    required this.newLevel,
-    required this.operationType,
-    required this.rewards,
+    required this.level,
+    required this.onContinue,
   }) : super(key: key);
-
-  @override
-  _LevelUpScreenState createState() => _LevelUpScreenState();
-}
-
-class _LevelUpScreenState extends State<LevelUpScreen>
-    with TickerProviderStateMixin {
-  late AnimationController _confettiController;
-  late AnimationController _scaleController;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _confettiController = AnimationController(
-      vsync: this,
-      duration: Duration(seconds: 3),
-    );
-
-    _scaleController = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: 800),
-    );
-
-    _scaleAnimation = CurvedAnimation(
-      parent: _scaleController,
-      curve: Curves.elasticOut,
-    );
-
-    _confettiController.forward();
-    _scaleController.forward();
-
-    // 3 saniye sonra otomatik kapanma
-    Future.delayed(Duration(seconds: 3), () {
-      if (mounted) Navigator.of(context).pop();
-    });
-  }
-
-  @override
-  void dispose() {
-    _confettiController.dispose();
-    _scaleController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
+<<<<<<< Updated upstream
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.stars,
+              color: Color(0xffFFD700),
+              size: 64,
+            ),
+            SizedBox(height: 16),
+            Text(
+              level >= 50 ? 'Maksimum Seviyeye Ulaştın!' : 'Seviye Atladın!',
+              style: GoogleFonts.quicksand(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Color(0xff2d2e83),
+=======
       backgroundColor: Colors.transparent,
       child: Container(
         padding: EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.95),
-          borderRadius: BorderRadius.circular(25),
+          color: Color(0xff2d2e83),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.2),
+            width: 2,
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                // Konfeti animasyonu
-                Lottie.asset(
-                  'assets/confetti.json',
-                  controller: _confettiController,
-                  height: 200,
-                ),
-                // Seviye rozeti
-                ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: Container(
-                    padding: EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Color(0xff2d2e83).withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      '${widget.newLevel}',
-                      style: GoogleFonts.poppins(
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xff2d2e83),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+            Lottie.asset(
+              'assets/animations/level_up.json',
+              width: 200,
+              height: 200,
+              repeat: true,
             ),
             SizedBox(height: 16),
-            ScaleTransition(
-              scale: _scaleAnimation,
-              child: Text(
-                'Tebrikler!',
-                style: GoogleFonts.poppins(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xff2d2e83),
-                ),
+            Text(
+              'Tebrikler!',
+              style: GoogleFonts.quicksand(
+                color: Colors.white,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
               ),
             ),
             SizedBox(height: 8),
             Text(
-              '${widget.operationType} işleminde ${widget.newLevel}. seviyeye ulaştın!',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                fontSize: 16,
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+              level >= 50
+                  ? 'Tebrikler! Bu işlem türünde maksimum seviyeye ulaştın.'
+                  : 'Yeni Seviye: $level',
+              style: GoogleFonts.quicksand(
+                fontSize: 18,
                 color: Colors.black87,
+=======
+=======
+>>>>>>> Stashed changes
+              'Seviye $level\'e ulaştın!',
+              style: GoogleFonts.quicksand(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w500,
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
               ),
+              textAlign: TextAlign.center,
             ),
-            SizedBox(height: 16),
-            // Yeni özelliklerin listesi
-            Container(
-              padding: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Color(0xff2d2e83).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(15),
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+            if (level < 50) ...[
+              SizedBox(height: 16),
+              Text(
+                'Yeni Ödüller:',
+                style: GoogleFonts.quicksand(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
-              child: Column(
-                children: [
-                  _buildRewardItem(
-                    Icons.star_rounded,
-                    'Daha büyük sayılar!',
-                    'Artık ${widget.rewards['maxNumber']} e kadar olan sayılarla çalışabilirsin',
-                  ),
-                  if (widget.rewards['timeBonus'] > 0) ...[
-                    SizedBox(height: 8),
-                    _buildRewardItem(
-                      Icons.timer,
-                      'Zaman Bonusu!',
-                      '+${widget.rewards['timeBonus']} saniye ek süre kazandın',
-                    ),
-                  ],
-                  if (widget.rewards['xpMultiplier'] > 1) ...[
-                    SizedBox(height: 8),
-                    _buildRewardItem(
-                      Icons.flash_on_rounded,
-                      'XP Çarpanı!',
-                      'Artık x${widget.rewards['xpMultiplier'].toStringAsFixed(1)} XP kazanacaksın',
-                    ),
-                  ],
-                ],
+              SizedBox(height: 8),
+              Text(
+                '• Daha yüksek zorluk seviyesi\n• Artan XP kazanımı\n• Yeni soru tipleri',
+                style: GoogleFonts.quicksand(
+                  fontSize: 14,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+            SizedBox(height: 20),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xff2d2e83),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+              ),
+              onPressed: onContinue,
+              child: Text(
+                'Devam Et',
+                style: GoogleFonts.quicksand(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+=======
+            SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: onContinue,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Color(0xff2d2e83),
+                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+=======
+            SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: onContinue,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Color(0xff2d2e83),
+                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+>>>>>>> Stashed changes
+              child: Text(
+                'Devam Et',
+                style: GoogleFonts.quicksand(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+                ),
               ),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildRewardItem(IconData icon, String title, String description) {
-    return Row(
-      children: [
-        Container(
-          padding: EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: Color(0xff2d2e83), size: 24),
-        ),
-        SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xff2d2e83),
-                ),
-              ),
-              Text(
-                description,
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: Colors.black87,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

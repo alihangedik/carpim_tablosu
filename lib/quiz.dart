@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'dart:developer' as developer;
-import 'package:carpim_tablosu/mainmenu.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -12,50 +11,82 @@ import 'package:just_audio/just_audio.dart';
 import './models/level_system.dart';
 import './widgets/level_up_screen.dart';
 import './widgets/level_progress_bar.dart';
+import './services/ai_service.dart';
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 // Rastgele soru üretme için Random 0-9 arası üretiliyor onu 100 ile 0 arasına çek - İsmail Efe Çelik
 // Kullanıcının istediğne göre işlem sırasındaki çeşitliliği kontrol et - İsmail Efe Çelik
 
-class CalismaEkrani extends StatefulWidget {
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+class Quiz extends StatefulWidget {
   final String islemTuru;
-
-  CalismaEkrani({required this.islemTuru});
+  Quiz({required this.islemTuru});
 
   @override
-  _CalismaEkraniState createState() => _CalismaEkraniState();
+  _QuizState createState() => _QuizState();
 }
 
-class _CalismaEkraniState extends State<CalismaEkrani>
-    with SingleTickerProviderStateMixin {
+class _QuizState extends State<Quiz> with TickerProviderStateMixin {
   int kalanSure = 30;
   Timer? _timer;
   late String islemTuru;
   Map<String, dynamic>? mevcutSoru;
-  List<Map<String, dynamic>> yanlisSorular = [];
-  bool _isLoading = true; // Yükleme durumu için flag
+  bool _isLoading = true;
+  String? _ipucu;
+  String? _aciklama;
+  String _currentAnswer = '';
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+  List<Map<String, dynamic>> _sonSorular =
+      []; // Son soruları takip etmek için liste
+  final int _maxSoruGecmisi = 10; // Son kaç soruyu takip edeceğimiz
+=======
+  List<Map<String, dynamic>> _sonSorular = [];
+  final int _maxSoruGecmisi = 10;
+>>>>>>> Stashed changes
+=======
+  List<Map<String, dynamic>> _sonSorular = [];
+  final int _maxSoruGecmisi = 10;
+>>>>>>> Stashed changes
 
   late AnimationController _animationController;
   late AudioPlayer _audioPlayer;
   bool _isSoundEnabled = true;
 
-  late LevelSystem levelSystem;
+  LevelSystem levelSystem = LevelSystem();
   int streak = 0;
   Timer? _gameTimer;
+  late AIService _aiService;
 
-  List<Map<String, dynamic>> _previousQuestions =
-      []; // Son soruları takip etmek için liste
-  static const int MAX_PREVIOUS_QUESTIONS =
-      10; // Takip edilecek maksimum soru sayısı
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+  late AIService _aiService;
+=======
+  final TextEditingController _answerController = TextEditingController();
+>>>>>>> Stashed changes
+=======
+  final TextEditingController _answerController = TextEditingController();
+>>>>>>> Stashed changes
 
   @override
   void initState() {
     super.initState();
-    islemTuru = widget.islemTuru;
+    islemTuru = widget.islemTuru
+        .toLowerCase()
+        .replaceAll('ç', 'c')
+        .replaceAll('ı', 'i')
+        .replaceAll('ö', 'o')
+        .replaceAll('ü', 'u');
     _audioPlayer = AudioPlayer();
     _animationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 500),
     );
+    _aiService = AIService();
     _initializeQuiz();
   }
 
@@ -90,7 +121,447 @@ class _CalismaEkraniState extends State<CalismaEkrani>
     });
   }
 
-  Future<void> _playCorrectSound() async {
+  Future<void> _loadLevelSystem() async {
+    await levelSystem.loadLevel(islemTuru);
+  }
+
+  Future<void> _loadNextQuestion() async {
+    setState(() {
+      _isLoading = true;
+      _ipucu = null;
+      _aciklama = null;
+      _currentAnswer = '';
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final yas = prefs.getInt('userAge') ?? 7;
+      final zorlukSeviyesi = prefs.getString('difficulty') ?? 'Orta';
+
+      developer.log('Yapay zeka sorusu üretiliyor... İşlem türü: $islemTuru' +
+          '$zorlukSeviyesi');
+
+      final soru = await _aiService.generateQuestion(
+        yas: yas,
+        islemTuru: islemTuru,
+        zorlukSeviyesi: zorlukSeviyesi,
+      );
+
+      developer.log('Yapay zeka sorusu başarıyla üretildi: ${soru['soru']}');
+
+      setState(() {
+        mevcutSoru = soru;
+        _isLoading = false;
+      });
+
+      _startTimer();
+    } catch (e) {
+      developer.log('Yapay zeka hatası: $e');
+      developer.log('Basit soru üretiliyor...');
+
+      setState(() {
+        mevcutSoru = _generateBasicQuestion();
+        _isLoading = false;
+      });
+
+      developer.log('Basit soru üretildi: ${mevcutSoru!['soru']}');
+    }
+  }
+
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+=======
+>>>>>>> Stashed changes
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _gameTimer?.cancel();
+    _animationController.dispose();
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: () async {
+        _gameTimer?.cancel();
+        return true;
+      },
+      child: Scaffold(
+        body: Container(
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/images/background.jpg'),
+              fit: BoxFit.cover,
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.timer, color: Colors.white),
+                          SizedBox(width: 8),
+                          Text(
+                            '$kalanSure',
+                            style: GoogleFonts.quicksand(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Icon(Icons.star, color: Colors.amber),
+                          SizedBox(width: 8),
+                          Text(
+                            'Seri: $streak',
+                            style: GoogleFonts.quicksand(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 32),
+                  if (mevcutSoru != null) ...[
+                    Text(
+                      '${mevcutSoru!['sayi1']} ${mevcutSoru!['islem']} ${mevcutSoru!['sayi2']} = ?',
+                      style: GoogleFonts.quicksand(
+                        fontSize: 48,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(height: 32),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: TextField(
+                        controller: _answerController,
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.quicksand(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          hintText: 'Cevabınızı yazın',
+                          hintStyle: GoogleFonts.quicksand(
+                            fontSize: 24,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        onChanged: (value) {
+                          setState(() {
+                            _currentAnswer = value;
+                          });
+                        },
+                        onSubmitted: (value) {
+                          if (value.isNotEmpty) {
+                            _checkAnswer();
+                          }
+                        },
+                      ),
+                    ),
+                    SizedBox(height: 24),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                      ),
+                      onPressed: _currentAnswer.isEmpty ? null : _checkAnswer,
+                      child: Text(
+                        'Kontrol Et',
+                        style: GoogleFonts.quicksand(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.lightbulb_outline,
+                              color: Colors.white),
+                          onPressed: _showHint,
+                          tooltip: 'İpucu Al',
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.help_outline, color: Colors.white),
+                          onPressed: _showExplanation,
+                          tooltip: 'Açıklama İste',
+                        ),
+                      ],
+                    ),
+                  ] else ...[
+                    CircularProgressIndicator(),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+  Map<String, dynamic> _generateBasicQuestion() {
+    final prefs = SharedPreferences.getInstance();
+    final zorlukSeviyesi =
+        prefs.then((prefs) => prefs.getString('difficulty') ?? 'Orta');
+
+    int minSayi = 1;
+    int maxSayi = 10;
+
+    // Zorluk seviyesine göre sayı aralıklarını ayarla
+    switch (zorlukSeviyesi) {
+      case 'Kolay':
+        maxSayi = 10;
+        break;
+      case 'Orta':
+        minSayi = 5;
+        maxSayi = 20;
+        break;
+      case 'Zor':
+        minSayi = 10;
+        maxSayi = 30;
+        break;
+    }
+
+    int sayi1;
+    int sayi2;
+    int cevap;
+    String islem;
+    Map<String, dynamic> yeniSoru;
+
+    do {
+      sayi1 = minSayi + Random().nextInt(maxSayi - minSayi + 1);
+      sayi2 = minSayi + Random().nextInt(maxSayi - minSayi + 1);
+
+      switch (islemTuru) {
+        case 'toplama':
+          cevap = sayi1 + sayi2;
+          islem = '+';
+          break;
+        case 'cikarma':
+          // Çıkarma için her zaman büyük sayıdan küçük sayıyı çıkar
+          if (sayi1 < sayi2) {
+            final temp = sayi1;
+            sayi1 = sayi2;
+            sayi2 = temp;
+          }
+          cevap = sayi1 - sayi2;
+          islem = '-';
+          break;
+        case 'carpma':
+          // Çarpma için sayıları küçült
+          sayi1 = minSayi + Random().nextInt((maxSayi ~/ 2) - minSayi + 1);
+          sayi2 = minSayi + Random().nextInt((maxSayi ~/ 2) - minSayi + 1);
+          cevap = sayi1 * sayi2;
+          islem = 'x';
+          break;
+        case 'bolme':
+          // Bölme için tam bölünen sayılar üret
+          sayi2 = minSayi + Random().nextInt(5);
+          cevap = minSayi + Random().nextInt((maxSayi ~/ sayi2) - minSayi + 1);
+          sayi1 = sayi2 * cevap;
+          islem = '÷';
+          break;
+        default:
+          print('Bilinmeyen işlem türü: $islemTuru');
+          cevap = sayi1 + sayi2;
+          islem = '+';
+      }
+
+      yeniSoru = {
+        'soru': '$sayi1 $islem $sayi2',
+        'cevap': cevap.toString(),
+        'ipucu': _generateHint(sayi1, sayi2, islem),
+        'aciklama': _generateExplanation(sayi1, sayi2, cevap, islem),
+        'zorlukPuani': zorlukSeviyesi == 'Kolay'
+            ? '1'
+            : zorlukSeviyesi == 'Orta'
+                ? '2'
+                : '3',
+      };
+    } while (_sonSorular.any((soru) => soru['soru'] == yeniSoru['soru']));
+
+    // Yeni soruyu geçmişe ekle
+    _sonSorular.add(yeniSoru);
+    // Geçmiş listesini sınırla
+    if (_sonSorular.length > _maxSoruGecmisi) {
+      _sonSorular.removeAt(0);
+    }
+
+    return yeniSoru;
+  }
+
+  String _generateHint(int sayi1, int sayi2, String islem) {
+    switch (islem) {
+      case '+':
+        return 'Önce birlikleri, sonra onları topla';
+      case '-':
+        return 'Büyük sayıdan küçük sayıyı çıkar';
+      case 'x':
+        return 'Çarpım tablosunu hatırla veya adım adım topla';
+      case '÷':
+        return '$sayi1 sayısı içinde kaç tane $sayi2 var?';
+      default:
+        return 'İşlemi adım adım yap';
+    }
+  }
+
+  String _generateExplanation(int sayi1, int sayi2, int cevap, String islem) {
+    switch (islem) {
+      case '+':
+        return '$sayi1 + $sayi2 = $cevap\nSayıları soldan sağa doğru topladık.';
+      case '-':
+        return '$sayi1 - $sayi2 = $cevap\nBüyük sayıdan küçük sayıyı çıkardık.';
+      case 'x':
+        return '$sayi1 x $sayi2 = $cevap\n$sayi1 sayısını $sayi2 kere topladık.';
+      case '÷':
+        return '$sayi1 ÷ $sayi2 = $cevap\n$sayi1 sayısını $sayi2\'ye böldük.';
+      default:
+        return 'Basit bir $islemTuru işlemi';
+    }
+  }
+
+  Future<void> _showHint() async {
+    if (_ipucu == null && mevcutSoru != null) {
+      final hint = await _aiService.getHint(mevcutSoru!['soru'], islemTuru);
+      setState(() {
+        _ipucu = hint;
+      });
+    }
+  }
+
+  Future<void> _showExplanation() async {
+    if (_aciklama == null && mevcutSoru != null) {
+      final explanation = await _aiService.getExplanation(
+        mevcutSoru!['soru'],
+        mevcutSoru!['cevap'],
+        islemTuru,
+      );
+      setState(() {
+        _aciklama = explanation;
+      });
+    }
+  }
+
+  void _startTimer() {
+    _gameTimer?.cancel();
+    _gameTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          if (kalanSure > 0) {
+            kalanSure--;
+          } else {
+            _gameTimer?.cancel();
+            _handleWrongAnswer();
+          }
+        });
+      }
+    });
+  }
+
+  Future<void> _handleCorrectAnswer() async {
+    _gameTimer?.cancel();
+    streak++;
+
+    // Level sistemini güncelle
+    int kazanilanPuan = 10 + (streak * 2);
+    await levelSystem.addExperience(kazanilanPuan);
+
+    // Doğru cevap dialogunu göster
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.green.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.check_circle,
+                  color: Colors.white,
+                  size: 64,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Doğru!',
+                  style: GoogleFonts.quicksand(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  '+$kazanilanPuan XP',
+                  style: GoogleFonts.quicksand(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xffFFD700),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // 1.5 saniye sonra dialogu kapat ve sonraki soruya geç
+      Future.delayed(Duration(milliseconds: 1500), () {
+        if (mounted) {
+          Navigator.of(context).pop();
+          if (levelSystem.hasLeveledUp) {
+            _showLevelUpScreen();
+          } else {
+            setState(() {
+              kalanSure = 30;
+            });
+            _loadNextQuestion();
+          }
+        }
+      });
+    }
+
     if (_isSoundEnabled) {
       try {
         await _audioPlayer.setAsset('assets/sounds/correct_answer.wav');
@@ -99,1150 +570,916 @@ class _CalismaEkraniState extends State<CalismaEkrani>
         print('Ses çalma hatası: $e');
       }
     }
-  }
 
-  Future<void> _playWrongSound() async {
-    if (_isSoundEnabled) {
-      try {
-        await _audioPlayer.setAsset('assets/sounds/wrong_answer.wav');
-        await _audioPlayer.play();
-      } catch (e) {
-        print('Ses çalma hatası: $e');
-      }
+    // Performans verilerini kaydet
+    await _savePerformanceData(true);
+
+    // Sadece animasyonu çalıştır
+    if (_animationController.isAnimating) {
+      _animationController.stop();
+    }
+
+    if (!_animationController.isDismissed && mounted) {
+      _animationController.forward().then((_) {
+        if (mounted) {
+          _animationController.reset();
+        }
+      });
     }
   }
 
-  Future<void> _loadNextQuestion() async {
-    if (!mounted) return;
-
-    _timer?.cancel();
+  Future<void> _handleWrongAnswer() async {
     _gameTimer?.cancel();
+    streak = 0;
 
-    try {
-      setState(() {
-        mevcutSoru = null;
-      });
+    // Yanlış cevabı sakla
+    String yanlisCevap = _currentAnswer;
 
-      final prefs = await SharedPreferences.getInstance();
-      final yeniKalanSure = prefs.getInt('question_time') ?? 30;
-      final yeniSoru = await rastgeleSoruUret(islemTuru);
-
-      if (!mounted) return;
-
-      setState(() {
-        mevcutSoru = yeniSoru;
-        kalanSure = yeniKalanSure;
-      });
-
-      _startTimer();
-    } catch (e) {
-      print('Soru üretme hatası: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Soru yüklenirken bir hata oluştu.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<Map<String, dynamic>> rastgeleSoruUret(String islemTuru) async {
-    if (!mounted) return {'soru': '', 'cevaplar': [], 'dogruCevap': 0};
-
-    final prefs = await SharedPreferences.getInstance();
-    int userAge = prefs.getInt('userAge') ?? 7;
-    String difficulty = prefs.getString('difficulty') ?? 'Orta';
-
-    // Yaşa ve zorluk seviyesine göre sayı aralıklarını belirle
-    int maxNumber = 10;
-    int minNumber = 1;
-
-    if (userAge <= 7) {
-      switch (difficulty) {
-        case 'Kolay':
-          maxNumber = 5;
-          minNumber = 1;
-          break;
-        case 'Orta':
-          maxNumber = 10;
-          minNumber = 1;
-          break;
-        case 'Zor':
-          maxNumber = 15;
-          minNumber = 1;
-          break;
-        default:
-          maxNumber = 10;
-          minNumber = 1;
-      }
-    } else if (userAge <= 9) {
-      switch (difficulty) {
-        case 'Kolay':
-          maxNumber = 10;
-          minNumber = 1;
-          break;
-        case 'Orta':
-          maxNumber = 15;
-          minNumber = 1;
-          break;
-        case 'Zor':
-          maxNumber = 20;
-          minNumber = 1;
-          break;
-        default:
-          maxNumber = 15;
-          minNumber = 1;
-      }
-    } else {
-      switch (difficulty) {
-        case 'Kolay':
-          maxNumber = 15;
-          minNumber = 1;
-          break;
-        case 'Orta':
-          maxNumber = 20;
-          minNumber = 1;
-          break;
-        case 'Zor':
-          maxNumber = 25;
-          minNumber = 1;
-          break;
-        default:
-          maxNumber = 20;
-          minNumber = 1;
-      }
+    // Sadece süre dolduğunda XP düşür
+    if (kalanSure == 0) {
+      await levelSystem.removeExperience(5);
     }
 
-    Map<String, dynamic> yeniSoru;
-    bool soruTekrari;
-    int denemeSayisi = 0;
-    final maxDeneme = 20;
-
-    do {
-      soruTekrari = false;
-      int sayi1, sayi2;
-      late String soru;
-      late int dogruCevap;
-
-      switch (islemTuru) {
-        case 'Toplama':
-          sayi1 = minNumber + Random().nextInt(maxNumber - minNumber + 1);
-          sayi2 = minNumber + Random().nextInt(maxNumber - minNumber + 1);
-          soru = '$sayi1 + $sayi2 = ?';
-          dogruCevap = sayi1 + sayi2;
-          break;
-
-        case 'Çıkarma':
-          do {
-            sayi1 = minNumber + Random().nextInt(maxNumber - minNumber + 1);
-            sayi2 = minNumber + Random().nextInt(sayi1);
-          } while (sayi2 >= sayi1 || sayi1 > maxNumber);
-          soru = '$sayi1 - $sayi2 = ?';
-          dogruCevap = sayi1 - sayi2;
-          break;
-
-        case 'Bölme':
-          List<int> bolenler = [];
-          for (int i = 2; i <= maxNumber; i++) {
-            if (i <= maxNumber ~/ i) {
-              bolenler.add(i);
-            }
-          }
-
-          if (bolenler.isEmpty) bolenler = [2];
-
-          // Önceki sorularda kullanılmamış bir bölen seçmeye çalış
-          List<int> kullanilmamisBolenler = bolenler.where((bolen) {
-            return !_previousQuestions.any((soru) {
-              String? soruMetni = soru['soru'] as String?;
-              return soruMetni != null && soruMetni.contains('÷ $bolen =');
-            });
-          }).toList();
-
-          // Eğer tüm bölenler kullanılmışsa, tüm bölenleri tekrar kullan
-          sayi2 = kullanilmamisBolenler.isNotEmpty
-              ? kullanilmamisBolenler[
-                  Random().nextInt(kullanilmamisBolenler.length)]
-              : bolenler[Random().nextInt(bolenler.length)];
-
-          // Bölünen sayıyı seç
-          List<int> olasiBolunenler = [];
-          for (int carpan = 1; carpan <= maxNumber ~/ sayi2; carpan++) {
-            int bolunen = sayi2 * carpan;
-            if (bolunen <= maxNumber) {
-              olasiBolunenler.add(bolunen);
-            }
-          }
-
-          // Önceki sorularda kullanılmamış bir bölünen seç
-          List<int> kullanilmamisBolunenler = olasiBolunenler.where((bolunen) {
-            return !_previousQuestions.any((soru) {
-              String? soruMetni = soru['soru'] as String?;
-              return soruMetni != null && soruMetni.startsWith('$bolunen ÷');
-            });
-          }).toList();
-
-          sayi1 = kullanilmamisBolunenler.isNotEmpty
-              ? kullanilmamisBolunenler[
-                  Random().nextInt(kullanilmamisBolunenler.length)]
-              : olasiBolunenler[Random().nextInt(olasiBolunenler.length)];
-
-          soru = '$sayi1 ÷ $sayi2 = ?';
-          dogruCevap = sayi1 ~/ sayi2;
-          break;
-
-        case 'Çarpma':
-          sayi1 = minNumber + Random().nextInt(maxNumber ~/ 2);
-          sayi2 = minNumber + Random().nextInt(maxNumber ~/ 2);
-          soru = '$sayi1 × $sayi2 = ?';
-          dogruCevap = sayi1 * sayi2;
-          break;
-
-        default:
-          return {'soru': '', 'cevaplar': [], 'dogruCevap': 0};
-      }
-
-      // Cevap şıklarını üret
-      Set<int> cevaplar = {dogruCevap};
-      int maxYanlisCevap =
-          islemTuru == 'Çarpma' ? dogruCevap * 2 : dogruCevap + maxNumber;
-
-      while (cevaplar.length < 4) {
-        int yanlisCevap;
-        if (Random().nextBool() && islemTuru != 'Bölme') {
-          // Doğru cevaba yakın bir sayı üret
-          yanlisCevap = dogruCevap + (Random().nextInt(5) - 2);
-        } else {
-          // Rastgele bir sayı üret
-          switch (islemTuru) {
-            case 'Bölme':
-              yanlisCevap = 1 + Random().nextInt(maxNumber ~/ 2);
-              break;
-            case 'Çarpma':
-              yanlisCevap = 1 + Random().nextInt(maxYanlisCevap);
-              break;
-            default:
-              yanlisCevap =
-                  minNumber + Random().nextInt(maxYanlisCevap - minNumber + 1);
-          }
-        }
-        if (yanlisCevap > 0) {
-          cevaplar.add(yanlisCevap);
-        }
-      }
-
-      List<int> karisikCevaplar = cevaplar.toList()..shuffle();
-      yeniSoru = {
-        'soru': soru,
-        'cevaplar': karisikCevaplar,
-        'dogruCevap': dogruCevap
-      };
-
-      // Son sorularla karşılaştır
-      soruTekrari = _previousQuestions.any((oncekiSoru) =>
-          oncekiSoru['soru'] == yeniSoru['soru'] ||
-          oncekiSoru['dogruCevap'] == yeniSoru['dogruCevap']);
-
-      denemeSayisi++;
-    } while (soruTekrari && denemeSayisi < maxDeneme);
-
-    // Yeni soruyu listeye ekle ve eski soruları temizle
-    _previousQuestions.add(yeniSoru);
-    if (_previousQuestions.length > MAX_PREVIOUS_QUESTIONS) {
-      _previousQuestions.removeAt(0);
-    }
-
-    return yeniSoru;
-  }
-
-  Future<void> _loadYanlisSorular() async {
-    final prefs = await SharedPreferences.getInstance();
-    final List<String>? storedList = prefs.getStringList('yanlisSorular');
-
-    if (storedList != null) {
-      setState(() {
-        yanlisSorular = storedList
-            .map((e) => Map<String, dynamic>.from(jsonDecode(e)))
-            .toList();
-      });
-    }
-  }
-
-// Yanlış soruları hafızaya kaydetme
-  Future<void> saveYanlisSorularToPrefs() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    // Her öğeyi JSON stringe çevir ve liste olarak kaydet
-    List<String> jsonList =
-        yanlisSorular.map((item) => json.encode(item)).toList();
-
-    await prefs.setStringList(
-        'yanlisSorular', jsonList); // Listeyi SharedPreferences'a kaydet
-  }
-
-  Future<void> cevapKontrol(String cevap) async {
-    final prefs = await SharedPreferences.getInstance();
-    final islemKey = islemTuru.toLowerCase();
-
-    if (cevap == mevcutSoru!['dogruCevap'].toString()) {
-      // Doğru cevap istatistiklerini güncelle
-      int dogruSayisi = prefs.getInt('dogru_$islemKey') ?? 0;
-      await prefs.setInt('dogru_$islemKey', dogruSayisi + 1);
-
-      // Performans verilerini güncelle
-      await _performansVerisiniGuncelle(true);
-
-      _handleCorrectAnswer();
-    } else {
-      // Yanlış cevap durumunda
-      _saveWrongQuestionForOperation(
-        mevcutSoru!['dogruCevap'],
-        mevcutSoru!['soru'],
-        int.parse(cevap),
-      );
-
-      // Performans verilerini güncelle
-      await _performansVerisiniGuncelle(false);
-
-      setState(() {
-        streak = 0;
-      });
-
-      _playWrongSound();
-      _showWrongAnswerDialog();
-    }
-  }
-
-  Future<void> _saveWrongQuestionForOperation(
-      int dogruCevap, String soruMetni, int yanlisCevap) async {
-    final prefs = await SharedPreferences.getInstance();
-
-    // İşlem türünü normalize et
-    String islemKey = islemTuru.toLowerCase();
-    if (islemKey == "çarpma") islemKey = "carpma";
-    if (islemKey == "çıkarma") islemKey = "cikarma";
-    if (islemKey == "bölme") islemKey = "bolme";
-
-    final key = 'yanlisSorular_$islemKey';
-
-    // Mevcut yanlış soruları al
-    List<String> mevcutSorular = prefs.getStringList(key) ?? [];
-
-    // Yeni soruyu ekle
-    try {
-      final yeniYanlisSoru = {
-        'soru': soruMetni,
-        'dogruCevap': dogruCevap.toString(),
-        'yanlisCevap': yanlisCevap.toString(),
-        'kategori': islemTuru,
-        'tarih': DateTime.now().toIso8601String(),
-      };
-
-      String yeniSoruJson = json.encode(yeniYanlisSoru);
-      mevcutSorular.add(yeniSoruJson);
-
-      // Son 50 soruyu tut
-      if (mevcutSorular.length > 50) {
-        mevcutSorular = mevcutSorular.sublist(mevcutSorular.length - 50);
-      }
-
-      // Kaydet
-      await prefs.setStringList(key, mevcutSorular);
-    } catch (e) {
-      print('Yanlış soru kaydedilirken hata: $e');
-    }
-  }
-
-  Future<void> _performansVerisiniGuncelle(bool isDogru) async {
-    final prefs = await SharedPreferences.getInstance();
-
-    // İşlem türünü düzgün formatta kaydet
-    String islemKey = islemTuru.toLowerCase();
-    if (islemKey == "çarpma") islemKey = "carpma";
-    if (islemKey == "çıkarma") islemKey = "cikarma";
-    if (islemKey == "bölme") islemKey = "bolme";
-
-    // Debug için performans verilerini yazdır
-    developer.log('İşlem türü: $islemTuru, Key: $islemKey');
-
-    // Mevcut performans verilerini yükle
-    String? jsonString = prefs.getString('performans_$islemKey');
-    developer.log('Mevcut veriler: $jsonString');
-
-    List<Map<String, dynamic>> veriler = [];
-    if (jsonString != null) {
-      try {
-        veriler = List<Map<String, dynamic>>.from(json.decode(jsonString));
-      } catch (e) {
-        developer.log('JSON decode hatası: $e');
-        // Hata durumunda boş liste ile devam et
-      }
-    }
-
-    // Bugünün tarihini al
-    DateTime now = DateTime.now();
-    String bugun = DateTime(now.year, now.month, now.day).toIso8601String();
-
-    // Bugünün verisini bul veya oluştur
-    Map<String, dynamic>? bugunVeri;
-    int bugunIndex = -1;
-
-    for (int i = 0; i < veriler.length; i++) {
-      DateTime veriTarihi = DateTime.parse(veriler[i]['tarih']);
-      if (veriTarihi.year == now.year &&
-          veriTarihi.month == now.month &&
-          veriTarihi.day == now.day) {
-        bugunVeri = Map<String, dynamic>.from(veriler[i]);
-        bugunIndex = i;
-        break;
-      }
-    }
-
-    if (bugunVeri == null) {
-      bugunVeri = {
-        'tarih': bugun,
-        'dogru': 0,
-        'yanlis': 0,
-        'basariOrani': 0.0,
-        'xp': levelSystem.currentXP,
-      };
-    }
-
-    // Doğru veya yanlış sayısını güncelle
-    if (isDogru) {
-      bugunVeri['dogru'] = (bugunVeri['dogru'] ?? 0) + 1;
-    } else {
-      bugunVeri['yanlis'] = (bugunVeri['yanlis'] ?? 0) + 1;
-    }
-
-    // Başarı oranını hesapla
-    int toplamDogru = bugunVeri['dogru'];
-    int toplamYanlis = bugunVeri['yanlis'];
-    int toplam = toplamDogru + toplamYanlis;
-    double basariOrani = toplam > 0 ? (toplamDogru / toplam) * 100 : 0;
-    bugunVeri['basariOrani'] = basariOrani;
-    bugunVeri['xp'] = levelSystem.currentXP;
-
-    // Debug için güncellenmiş veriyi yazdır
-    developer.log('Güncellenmiş veri: $bugunVeri');
-
-    // Veriyi güncelle veya ekle
-    if (bugunIndex >= 0) {
-      veriler[bugunIndex] = bugunVeri;
-    } else {
-      if (veriler.length >= 7) {
-        veriler.removeAt(0);
-      }
-      veriler.add(bugunVeri);
-    }
-
-    // Verileri kaydet
-    try {
-      String yeniJson = json.encode(veriler);
-      await prefs.setString('performans_$islemKey', yeniJson);
-      developer.log('Veriler kaydedildi: $yeniJson');
-    } catch (e) {
-      developer.log('JSON encode hatası: $e');
-    }
-  }
-
-  void _handleCorrectAnswer() {
-    int xpGain = 10;
-
-    // Hızlı cevap bonusu (kalan süreye göre)
-    if (kalanSure > kalanSure / 2) {
-      xpGain += 5;
-    }
-
-    // Doğru cevap serisi bonusu
-    xpGain += (streak * 2);
-
-    // Mevcut seviyenin XP çarpanını uygula
-    final rewards = levelSystem.getLevelRewards();
-    xpGain = (xpGain * rewards['xpMultiplier']).round();
-
-    // XP'yi ekle ve seviye atlama kontrolü yap
-    int oldLevel = levelSystem.currentLevel;
-    bool leveledUp = levelSystem.gainXP(xpGain);
-
-    if (leveledUp) {
-      _showLevelUpDialog(oldLevel);
-    }
-
-    setState(() {
-      streak++;
-    });
-
-    _playCorrectSound();
-    _loadNextQuestion();
-  }
-
-  void _showLevelUpDialog(int oldLevel) {
-    final rewards = levelSystem.getLevelRewards();
-    bool isMaxLevel = rewards['isMaxLevel'];
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Padding(
-          padding: EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.stars,
-                color: Color(0xffFFD700),
-                size: 64,
-              ),
-              SizedBox(height: 16),
-              Text(
-                isMaxLevel ? 'Maksimum Seviyeye Ulaştın!' : 'Seviye Atladın!',
-                style: GoogleFonts.quicksand(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xff2d2e83),
+    // Performans verilerini kaydet
+    await _savePerformanceData(false, yanlisCevap);
+
+    // Eğer süre bitmemişse (yani kullanıcı yanlış cevap verdiyse) dialog göster
+    if (kalanSure > 0 && mounted) {
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.red.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.cancel,
+                  color: Colors.white,
+                  size: 64,
                 ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                isMaxLevel
-                    ? 'Tebrikler! Bu işlem türünde maksimum seviyeye ulaştın.'
-                    : 'Seviye ${oldLevel} → ${levelSystem.currentLevel}',
-                style: GoogleFonts.quicksand(
-                  fontSize: 18,
-                  color: Colors.black87,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              if (!isMaxLevel) ...[
                 SizedBox(height: 16),
                 Text(
-                  'Yeni Ödüller:',
+                  'Yanlış Cevap!',
                   style: GoogleFonts.quicksand(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  '• Daha yüksek sayılarla işlemler\n• Artan zaman bonusu\n• Daha fazla XP kazanımı',
-                  style: GoogleFonts.quicksand(
-                    fontSize: 14,
-                    color: Colors.black87,
-                  ),
-                ),
-              ],
-              SizedBox(height: 20),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xff2d2e83),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                ),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text(
-                  'Devam Et',
-                  style: GoogleFonts.quicksand(
-                    fontSize: 16,
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showCorrectAnswerDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.95),
-            borderRadius: BorderRadius.circular(25),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.check_circle_outline_rounded,
-                  size: 40,
-                  color: Colors.green,
-                ),
-              ),
-              SizedBox(height: 16),
-              Text(
-                'Doğru!',
-                style: GoogleFonts.quicksand(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
-                ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                '+${_calculateXPGain()} XP',
-                style: GoogleFonts.quicksand(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.amber,
-                ),
-              ),
-              if (streak > 1) ...[
                 SizedBox(height: 8),
                 Text(
-                  '${streak}x Combo!',
+                  'Doğru cevap: ${mevcutSoru!['cevap']}',
                   style: GoogleFonts.quicksand(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.orange,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(height: 20),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.red,
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                  onPressed: () {
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (context) => Mainmenu(
+                          mevcutPuan: 0,
+                          yanlisSorular: [],
+                        ),
+                      ),
+                      (route) => false,
+                    );
+                  },
+                  child: Text(
+                    'Ana Menüye Dön',
+=======
+=======
+>>>>>>> Stashed changes
+                    Navigator.of(context).pop();
+                  },
+                  child: Text(
+                    'Devam Et',
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
-            ],
+            ),
           ),
         ),
-      ),
-    );
+      );
+    }
 
-    // 1 saniye sonra dialog'u kapat ve yeni soruya geç
-    Timer(Duration(seconds: 1), () {
-      if (mounted) {
-        Navigator.of(context).pop();
-        _loadNextQuestion();
-      }
+    // Yanlış cevap animasyonu ve yeni soru
+    setState(() {
+      _currentAnswer = '';
+      kalanSure = 30;
     });
+    _loadNextQuestion();
   }
 
-  void _showWrongAnswerDialog() {
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+  Future<void> _savePerformanceData(bool isDogru, [String? yanlisCevap]) async {
+    final prefs = await SharedPreferences.getInstance();
+    final now = DateTime.now();
+    final performanceKey = 'performans_${islemTuru.toLowerCase()}';
+    final yanlisSorularKey = 'yanlisSorular_${islemTuru.toLowerCase()}';
+
+    // Performans verilerini kaydet
+    List<Map<String, dynamic>> performanceList = [];
+    final String? performanceData = prefs.getString(performanceKey);
+
+    if (performanceData != null) {
+      performanceList =
+          List<Map<String, dynamic>>.from(jsonDecode(performanceData) as List);
+    }
+
+    performanceList.add({
+      'tarih': now.toIso8601String(),
+      'dogru': isDogru,
+      'soru': mevcutSoru!['soru'],
+      'cevap': mevcutSoru!['cevap'],
+      'zorlukPuani': mevcutSoru!['zorlukPuani'] ?? '1',
+      'sure': 30 - kalanSure,
+      'streak': streak,
+    });
+
+    // Son 100 performans verisini tut
+    if (performanceList.length > 100) {
+      performanceList = performanceList.sublist(performanceList.length - 100);
+    }
+
+    await prefs.setString(performanceKey, jsonEncode(performanceList));
+
+    // Yanlış cevap verildiyse yanlış sorular listesine ekle
+    if (!isDogru && yanlisCevap != null) {
+      List<String> yanlisSorular = prefs.getStringList(yanlisSorularKey) ?? [];
+      final yanlisSoru = {
+        'soru': mevcutSoru!['soru'],
+        'dogruCevap': mevcutSoru!['cevap'],
+        'yanlisCevap': yanlisCevap,
+        'kategori': islemTuru,
+        'tarih': now.toIso8601String(),
+      };
+      yanlisSorular.add(jsonEncode(yanlisSoru));
+
+      // Son 50 yanlış soruyu tut
+      if (yanlisSorular.length > 50) {
+        yanlisSorular = yanlisSorular.sublist(yanlisSorular.length - 50);
+      }
+
+      await prefs.setStringList(yanlisSorularKey, yanlisSorular);
+    }
+  }
+
+  void _showLevelUpScreen() {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.95),
-            borderRadius: BorderRadius.circular(25),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.error_outline_rounded,
-                  size: 40,
-                  color: Colors.redAccent,
-                ),
-              ),
-              SizedBox(height: 16),
-              Text(
-                'Maalesef Yanlış!',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.quicksand(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.redAccent,
-                ),
-              ),
-              SizedBox(height: 8),
-              Container(
-                margin: EdgeInsets.symmetric(vertical: 8),
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      'Doğru Cevap:',
-                      style: GoogleFonts.quicksand(
-                        fontSize: 14,
-                        color: Colors.black54,
-                      ),
-                    ),
-                    Text(
-                      '${mevcutSoru!['dogruCevap']}',
-                      style: GoogleFonts.quicksand(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.redAccent,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xff2d2e83),
-                        elevation: 0,
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                      ),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        _loadNextQuestion();
-                      },
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.restart_alt_rounded,
-                              color: Colors.white, size: 20),
-                          SizedBox(width: 8),
-                          Text(
-                            'Tekrar Dene',
-                            style: GoogleFonts.quicksand(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xff2d2e83),
-                        elevation: 0,
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                      ),
-                      onPressed: () {
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                            builder: (context) => Mainmenu(
-                              yanlisSorular: [],
-                            ),
-                          ),
-                          (route) => false,
-                        );
-                      },
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.home_filled,
-                              color: Colors.white, size: 20),
-                          SizedBox(width: 8),
-                          Text(
-                            'Ana Menü',
-                            style: GoogleFonts.quicksand(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+      builder: (context) => LevelUpScreen(
+        level: levelSystem.currentLevel,
+        onContinue: () {
+          Navigator.of(context).pop();
+          _loadNextQuestion();
+        },
       ),
     );
-  }
-
-  int _calculateXPGain() {
-    int xpGain = 10; // Temel XP
-
-    // Hız bonusu
-    if (kalanSure > kalanSure / 2) {
-      xpGain += 5; // Hızlı cevap bonusu
-    }
-
-    // Streak bonusu
-    if (streak > 1) {
-      xpGain =
-          (xpGain * (1 + (streak * 0.1))).round(); // Her streak için %10 bonus
-    }
-
-    return xpGain;
   }
 
   @override
   void dispose() {
+    _gameTimer?.cancel();
     _animationController.dispose();
     _audioPlayer.dispose();
-    _timer?.cancel();
-    _gameTimer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading || mevcutSoru == null) {
-      return Scaffold(
-        backgroundColor: Color(0xff2d2e83),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-              SizedBox(height: 16),
-              Text(
-                'Sorular Hazırlanıyor...',
-                style: GoogleFonts.quicksand(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     return WillPopScope(
       onWillPop: () async {
-        bool? shouldPop = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            backgroundColor: Colors.white.withOpacity(0.9),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            title: Row(
-              children: [
-                Icon(Icons.warning_amber_rounded, color: Colors.orange),
-                SizedBox(width: 10),
-                Text('Uyarı'),
-              ],
-            ),
-            content: Text(
-                'Çıkmak istediğinize emin misiniz?\nİlerlemeniz kaydedilmeyecek.'),
-            actions: [
-              TextButton(
-                child: Text(
-                  'İptal',
+        // Çıkış dialogunu göster
+        bool shouldPop = await showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                title: Text(
+                  'Çıkmak istediğinize emin misiniz?',
                   style: GoogleFonts.quicksand(
-                    color: Colors.green,
                     fontWeight: FontWeight.bold,
+                    color: Color(0xff2d2e83),
                   ),
                 ),
-                onPressed: () => Navigator.of(context).pop(false),
-              ),
-              TextButton(
-                child: Text(
-                  'Çık',
+                content: Text(
+                  'Eğer çıkarsanız mevcut seriniz sıfırlanacak.',
                   style: GoogleFonts.quicksand(
-                    color: Colors.red,
-                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
                   ),
                 ),
-                onPressed: () => Navigator.of(context).pop(true),
-              ),
-            ],
-          ),
-        );
-        return shouldPop ?? false;
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () {
-              showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  backgroundColor: Colors.white.withOpacity(0.9),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  title: Row(
-                    children: [
-                      Icon(Icons.warning_amber_rounded, color: Colors.orange),
-                      SizedBox(width: 10),
-                      Text('Uyarı'),
-                    ],
-                  ),
-                  content: Text(
-                      'Çıkmak istediğinize emin misiniz?\nİlerlemeniz kaydedilmeyecek.'),
-                  actions: [
-                    TextButton(
-                      child: Text(
-                        'İptal',
-                        style: GoogleFonts.quicksand(
-                          color: Colors.green,
-                          fontWeight: FontWeight.bold,
-                        ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: Text(
+                      'İptal',
+                      style: GoogleFonts.quicksand(
+                        color: Colors.grey,
+                        fontWeight: FontWeight.bold,
                       ),
-                      onPressed: () => Navigator.of(context).pop(false),
                     ),
-                    TextButton(
-                      child: Text(
-                        'Çık',
-                        style: GoogleFonts.quicksand(
-                          color: Colors.red,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      _gameTimer?.cancel();
+                      Navigator.of(context).pop(true);
+                    },
+                    child: Text(
+                      'Çık',
+                      style: GoogleFonts.quicksand(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
                       ),
-                      onPressed: () => Navigator.of(context).pop(true),
-                    ),
-                  ],
-                ),
-              ).then((shouldPop) {
-                if (shouldPop ?? false) {
-                  Navigator.of(context).pop();
-                }
-              });
-            },
-          ),
-          title: Text(
-            islemTuru,
-            style: GoogleFonts.quicksand(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          centerTitle: true,
-          backgroundColor: Color(0xff2d2e83),
-          elevation: 0,
-        ),
-        backgroundColor: Color(0xff2d2e83),
-        body: Stack(
-          children: [
-            Positioned(
-              bottom: -5,
-              right: 0,
-              left: 0,
-              child: Opacity(
-                opacity: 0.4,
-                child: Image.asset(
-                  "assets/backgroud_image_3.png",
-                  width: 500,
-                ),
-              ),
-            ),
-            Column(
-              children: [
-                if (levelSystem != null) ...[
-                  Padding(
-                    padding: EdgeInsets.only(top: 16, left: 16, right: 16),
-                    child: LevelProgressBar(
-                      currentLevel: levelSystem.currentLevel,
-                      currentXP: levelSystem.currentXP,
-                      requiredXP: levelSystem.requiredXP,
-                      operationType: widget.islemTuru,
                     ),
                   ),
                 ],
-                Expanded(
-                  child: Container(
-                    height: MediaQuery.of(context).size.height,
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: <Widget>[
-                          _buildTimerWidget(),
-                          SizedBox(height: 10),
-                          Container(
-                            height: MediaQuery.of(context).size.height * 0.15,
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.only(bottom: 10, top: 20),
-                              child: AnimatedSwitcher(
-                                duration: Duration(milliseconds: 200),
-                                transitionBuilder: (Widget child,
-                                    Animation<double> animation) {
-                                  return SlideTransition(
-                                    position: Tween<Offset>(
-                                      begin: Offset(0.0, .5),
-                                      end: Offset.zero,
-                                    ).animate(animation),
-                                    child: child,
-                                  );
-                                },
-                                child: Container(
-                                  key: ValueKey(mevcutSoru!['soru']),
-                                  padding: EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Container(
-                                    width: 250,
-                                    child: Text(
-                                      mevcutSoru!['soru'],
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 30,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xff2d2e83),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
+              ),
+            ) ??
+            false;
+        return shouldPop;
+      },
+      child: Scaffold(
+        backgroundColor: Color(0xff2d2e83),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(FontAwesomeIcons.arrowLeft, color: Colors.white),
+            onPressed: () async {
+              // Çıkış dialogunu göster
+              bool shouldPop = await showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      backgroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      title: Text(
+                        'Çıkmak istediğinize emin misiniz?',
+                        style: GoogleFonts.quicksand(
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xff2d2e83),
+                        ),
+                      ),
+                      content: Text(
+                        'Eğer çıkarsanız mevcut seriniz sıfırlanacak.',
+                        style: GoogleFonts.quicksand(
+                          color: Colors.black87,
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: Text(
+                            'İptal',
+                            style: GoogleFonts.quicksand(
+                              color: Colors.grey,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          Column(
-                            children: List.generate(4, (index) {
-                              return Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Container(
-                                  width: 250,
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      elevation: 0,
-                                      backgroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      padding: EdgeInsets.symmetric(
-                                          vertical: 8, horizontal: 32),
-                                    ),
-                                    onPressed: () {
-                                      _timer?.cancel();
-                                      cevapKontrol(mevcutSoru!['cevaplar']
-                                              [index]
-                                          .toString());
-                                    },
-                                    child: Text(
-                                      (mevcutSoru!['cevaplar'][index])
-                                          .toString(),
-                                      style: TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xff2d2e83),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            _gameTimer?.cancel();
+                            Navigator.of(context).pop(true);
+                          },
+                          child: Text(
+                            'Çık',
+                            style: GoogleFonts.quicksand(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
+                    ),
+                  ) ??
+                  false;
+
+              if (shouldPop) {
+                Navigator.of(context).pop();
+              }
+            },
+          ),
+          actions: [
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              margin: EdgeInsets.only(right: 20),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Row(
+                children: [
+                  SizedBox(width: 4),
+                  LevelProgressBar(levelSystem: levelSystem),
+                  Text(
+                    '${levelSystem.currentXP} XP',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-              ],
+                ],
+=======
+  Future<void> _checkAnswer() async {
+    if (_answerController.text.isEmpty) return;
+
+    int userAnswer;
+    try {
+      userAnswer = int.parse(_answerController.text);
+    } catch (e) {
+      _handleWrongAnswer();
+      return;
+    }
+
+    if (userAnswer == int.parse(mevcutSoru!['cevap'])) {
+      await _handleCorrectAnswer();
+    } else {
+      await _handleWrongAnswer();
+    }
+
+    _answerController.clear();
+    _loadNextQuestion();
+  }
+
+  Future<void> _showLevelUpScreen() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Color(0xff2d2e83),
+        title: Text(
+          'Tebrikler! Seviye Atladınız!',
+          style: GoogleFonts.quicksand(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.star,
+              color: Colors.yellow,
+              size: 50,
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Yeni Seviye: ${levelSystem.currentLevel}',
+              style: GoogleFonts.quicksand(
+                color: Colors.white,
+>>>>>>> Stashed changes
+              ),
             ),
           ],
         ),
+<<<<<<< Updated upstream
+        body: _isLoading
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      color: Colors.white,
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Sorular Hazırlanıyor...',
+                      style: GoogleFonts.quicksand(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                FontAwesomeIcons.clock,
+                                color: kalanSure > 10
+                                    ? Colors.white
+                                    : Colors.redAccent,
+                                size: 18,
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                '$kalanSure',
+                                style: GoogleFonts.quicksand(
+                                  color: kalanSure > 10
+                                      ? Colors.white
+                                      : Colors.redAccent,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                FontAwesomeIcons.boltLightning,
+                                color: Color(0xffFFD700),
+                                size: 18,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                'Seri: $streak',
+                                style: GoogleFonts.quicksand(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            if (mevcutSoru != null) ...[
+                              Container(
+                                alignment: Alignment.center,
+                                width: double.infinity,
+                                height:
+                                    MediaQuery.of(context).size.height * 0.2,
+                                padding: EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.05),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          mevcutSoru!['soru'] ?? '',
+                                          style: GoogleFonts.quicksand(
+                                            color: Colors.white,
+                                            fontSize: 32,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Text(
+                                          ' = ',
+                                          style: GoogleFonts.quicksand(
+                                            color: Colors.white,
+                                            fontSize: 32,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color:
+                                                Colors.white.withOpacity(0.1),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                          ),
+                                          child: Text(
+                                            _currentAnswer.isEmpty
+                                                ? '?'
+                                                : _currentAnswer,
+                                            style: GoogleFonts.quicksand(
+                                              color: Colors.white,
+                                              fontSize: 32,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(height: 30),
+                              // Numara tuşları grid'i
+                              Container(
+                                padding: EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.05),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: GridView.builder(
+                                  shrinkWrap: true,
+                                  physics: NeverScrollableScrollPhysics(),
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 3,
+                                    childAspectRatio: 1.5,
+                                    crossAxisSpacing: 12,
+                                    mainAxisSpacing: 12,
+                                  ),
+                                  itemCount: 12,
+                                  itemBuilder: (context, index) {
+                                    if (index == 9) {
+                                      return _buildActionButton(
+                                        icon: FontAwesomeIcons.backspace,
+                                        onPressed: () {
+                                          setState(() {
+                                            if (_currentAnswer.isNotEmpty) {
+                                              _currentAnswer =
+                                                  _currentAnswer.substring(
+                                                      0,
+                                                      _currentAnswer.length -
+                                                          1);
+                                            }
+                                          });
+                                        },
+                                      );
+                                    }
+                                    if (index == 10) {
+                                      return _buildNumberButton('0');
+                                    }
+                                    if (index == 11) {
+                                      return _buildActionButton(
+                                        icon: FontAwesomeIcons.checkCircle,
+                                        onPressed: _checkAnswer,
+                                      );
+                                    }
+                                    return _buildNumberButton('${index + 1}');
+                                  },
+                                ),
+                              ),
+                              SizedBox(height: 20),
+                              if (_ipucu != null) ...[
+                                SizedBox(height: 20),
+                                Container(
+                                  padding: EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(15),
+                                    border: Border.all(
+                                      color: Colors.amber.withOpacity(0.3),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.lightbulb,
+                                            color: Colors.amber,
+                                            size: 20,
+                                          ),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            'İpucu',
+                                            style: GoogleFonts.quicksand(
+                                              color: Colors.amber,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(height: 8),
+                                      Text(
+                                        _ipucu!,
+                                        style: GoogleFonts.quicksand(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              if (_aciklama != null) ...[
+                                SizedBox(height: 20),
+                                Container(
+                                  padding: EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(15),
+                                    border: Border.all(
+                                      color: Colors.green.withOpacity(0.3),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.help,
+                                            color: Colors.green,
+                                            size: 20,
+                                          ),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            'Açıklama',
+                                            style: GoogleFonts.quicksand(
+                                              color: Colors.green,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(height: 8),
+                                      Text(
+                                        _aciklama!,
+                                        style: GoogleFonts.quicksand(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+=======
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text(
+              'Devam Et',
+              style: GoogleFonts.quicksand(
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+>>>>>>> Stashed changes
       ),
     );
   }
 
-  Widget _buildTimerWidget() {
-    return FutureBuilder<int>(
-      future: SharedPreferences.getInstance()
-          .then((prefs) => prefs.getInt('question_time') ?? 30),
-      builder: (context, snapshot) {
-        final maxSure = snapshot.data ?? 30;
-        return Stack(
-          alignment: Alignment.center,
+<<<<<<< Updated upstream
+  Widget _buildNumberButton(String number) {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white.withOpacity(0.1),
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+      onPressed: () {
+        setState(() {
+          if (_currentAnswer.length < 10) {
+            _currentAnswer += number;
+          }
+        });
+      },
+      child: Text(
+        number,
+        style: GoogleFonts.quicksand(
+          fontSize: 24,
+=======
+  Future<void> _checkAnswer() async {
+    if (_answerController.text.isEmpty) return;
+
+    int userAnswer;
+    try {
+      userAnswer = int.parse(_answerController.text);
+    } catch (e) {
+      _handleWrongAnswer();
+      return;
+    }
+
+    if (userAnswer == int.parse(mevcutSoru!['cevap'])) {
+      await _handleCorrectAnswer();
+    } else {
+      await _handleWrongAnswer();
+    }
+
+    _answerController.clear();
+    _loadNextQuestion();
+  }
+
+  Future<void> _showLevelUpScreen() async {
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Color(0xff2d2e83),
+        title: Text(
+          'Tebrikler! Seviye Atladınız!',
+          style: GoogleFonts.quicksand(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              height: 100,
-              width: 100,
-              child: CircularProgressIndicator(
-                value: kalanSure / maxSure,
-                valueColor: AlwaysStoppedAnimation(
-                  kalanSure > (maxSure * 0.5)
-                      ? Colors.white
-                      : kalanSure > (maxSure * 0.25)
-                          ? Colors.orangeAccent
-                          : Colors.redAccent,
-                ),
-                strokeWidth: 10,
-                strokeCap: StrokeCap.round,
-              ),
+            Icon(
+              Icons.star,
+              color: Colors.yellow,
+              size: 50,
             ),
+            SizedBox(height: 16),
             Text(
-              '$kalanSure',
-              style: TextStyle(
-                fontSize: 40,
-                fontWeight: FontWeight.bold,
-                color: kalanSure > (maxSure * 0.5)
-                    ? Colors.white
-                    : kalanSure > (maxSure * 0.25)
-                        ? Colors.orangeAccent
-                        : Colors.redAccent,
+              'Yeni Seviye: ${levelSystem.currentLevel}',
+              style: GoogleFonts.quicksand(
+                color: Colors.white,
               ),
             ),
           ],
-        );
-      },
+>>>>>>> Stashed changes
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text(
+              'Devam Et',
+              style: GoogleFonts.quicksand(
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Future<void> _loadLevelSystem() async {
-    levelSystem = await LevelSystem.loadLevelData(widget.islemTuru);
-    setState(() {});
+<<<<<<< Updated upstream
+  Widget _buildActionButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white.withOpacity(0.1),
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+      onPressed: onPressed,
+      child: Icon(icon, size: 24),
+    );
   }
 
-  void _startTimer() {
-    _timer?.cancel();
-    _gameTimer?.cancel();
+  void _checkAnswer() {
+    if (_currentAnswer.isEmpty || mevcutSoru == null) return;
 
-    _gameTimer = Timer.periodic(Duration(seconds: 1), (timer) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
+    if (_currentAnswer == mevcutSoru!['cevap']) {
+      _handleCorrectAnswer();
+    } else {
+      _handleWrongAnswer();
+    }
 
-      setState(() {
-        if (kalanSure > 0) {
-          kalanSure--;
-        } else {
-          timer.cancel();
-          streak = 0;
-          _loadNextQuestion();
-        }
-      });
+    setState(() {
+      _currentAnswer = '';
     });
+=======
+  Future<void> _savePerformanceData(bool isCorrect,
+      [String? wrongAnswer]) async {
+    final prefs = await SharedPreferences.getInstance();
+    String operationType = islemTuru.toLowerCase();
+
+    // Toplam skor
+    int totalScore = prefs.getInt('${operationType}_total_score') ?? 0;
+    await prefs.setInt(
+        '${operationType}_total_score', totalScore + (isCorrect ? 10 : 0));
+
+    // Yanlış cevap sayısı
+    int wrongAnswers = prefs.getInt('${operationType}_wrong_answers') ?? 0;
+    if (!isCorrect) {
+      await prefs.setInt('${operationType}_wrong_answers', wrongAnswers + 1);
+    }
+
+    // Doğru cevap sayısı
+    int correctAnswers = prefs.getInt('${operationType}_correct_answers') ?? 0;
+    if (isCorrect) {
+      await prefs.setInt(
+          '${operationType}_correct_answers', correctAnswers + 1);
+    }
+
+=======
+  Future<void> _savePerformanceData(bool isCorrect,
+      [String? wrongAnswer]) async {
+    final prefs = await SharedPreferences.getInstance();
+    String operationType = islemTuru.toLowerCase();
+
+    // Toplam skor
+    int totalScore = prefs.getInt('${operationType}_total_score') ?? 0;
+    await prefs.setInt(
+        '${operationType}_total_score', totalScore + (isCorrect ? 10 : 0));
+
+    // Yanlış cevap sayısı
+    int wrongAnswers = prefs.getInt('${operationType}_wrong_answers') ?? 0;
+    if (!isCorrect) {
+      await prefs.setInt('${operationType}_wrong_answers', wrongAnswers + 1);
+    }
+
+    // Doğru cevap sayısı
+    int correctAnswers = prefs.getInt('${operationType}_correct_answers') ?? 0;
+    if (isCorrect) {
+      await prefs.setInt(
+          '${operationType}_correct_answers', correctAnswers + 1);
+    }
+
+>>>>>>> Stashed changes
+    // Yanlış cevapları kaydet
+    if (!isCorrect) {
+      List<String> wrongAnswersList =
+          prefs.getStringList('${operationType}_wrong_answers_list') ?? [];
+      String wrongAnswerData =
+          '${mevcutSoru!['sayi1']}${mevcutSoru!['islem']}${mevcutSoru!['sayi2']}=$wrongAnswer';
+      wrongAnswersList.add(wrongAnswerData);
+      await prefs.setStringList(
+          '${operationType}_wrong_answers_list', wrongAnswersList);
+    }
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
   }
 }

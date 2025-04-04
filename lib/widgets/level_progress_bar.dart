@@ -1,128 +1,151 @@
 import 'package:flutter/material.dart';
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+=======
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
+import '../models/level_system.dart';
 
 class LevelProgressBar extends StatelessWidget {
-  final int currentLevel;
-  final int currentXP;
-  final int requiredXP;
-  final String operationType;
+  final LevelSystem levelSystem;
 
   const LevelProgressBar({
     Key? key,
-    required this.currentLevel,
-    required this.currentXP,
-    required this.requiredXP,
-    required this.operationType,
+    required this.levelSystem,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final progress = currentXP / requiredXP;
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
+    final progress = levelSystem.currentXP / levelSystem.requiredXP;
+    final isMaxLevel = levelSystem.currentLevel >= 50;
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Seviye',
-                style: GoogleFonts.quicksand(
-                  color: Colors.white.withOpacity(0.7),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Icon(
+                  FontAwesomeIcons.solidStar,
+                  color: Color(0xffFFD700),
+                  size: 12,
                 ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  currentLevel.toString(),
+                SizedBox(width: 4),
+                Text(
+                  'Seviye ${levelSystem.currentLevel}',
                   style: GoogleFonts.quicksand(
                     color: Colors.white,
-                    fontSize: 20,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          SizedBox(height: 12),
-          Stack(
-            children: [
-              // Progress bar background
-              Container(
-                height: 12,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
+          if (!isMaxLevel) ...[
+            SizedBox(width: 8),
+            Container(
+              width: 100,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(2),
               ),
-              // Progress bar fill
-              AnimatedContainer(
-                duration: Duration(milliseconds: 500),
-                height: 12,
-                width: MediaQuery.of(context).size.width *
-                    progress *
-                    0.8, // Adjust width based on parent container
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.white.withOpacity(0.8),
-                      Colors.white,
-                    ],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
+              child: FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: progress.clamp(0.0, 1.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Color(0xffFFD700),
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  borderRadius: BorderRadius.circular(6),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.white.withOpacity(0.2),
-                      blurRadius: 6,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
                 ),
               ),
-            ],
-          ),
-          SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '$currentXP XP',
-                style: GoogleFonts.quicksand(
-                  color: Colors.white.withOpacity(0.9),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Text(
-                '$requiredXP XP',
-                style: GoogleFonts.quicksand(
-                  color: Colors.white.withOpacity(0.6),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ],
       ),
+=======
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 80,
+          height: 8,
+          margin: EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: levelSystem.getProgress(),
+              backgroundColor: Colors.transparent,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                Color(0xffFFD700),
+              ),
+            ),
+          ),
+        ),
+        Text(
+          'Lvl ${levelSystem.currentLevel}',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+>>>>>>> Stashed changes
+=======
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 80,
+          height: 8,
+          margin: EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: levelSystem.getProgress(),
+              backgroundColor: Colors.transparent,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                Color(0xffFFD700),
+              ),
+            ),
+          ),
+        ),
+        Text(
+          'Lvl ${levelSystem.currentLevel}',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+>>>>>>> Stashed changes
     );
   }
 }

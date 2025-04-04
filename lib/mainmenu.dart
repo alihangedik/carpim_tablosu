@@ -51,7 +51,7 @@ class _MainmenuState extends State<Mainmenu> {
             top: 45,
             right: 16,
             child: IconButton(
-              icon: Icon(Icons.settings, color: Colors.white, size: 28),
+              icon: Icon(FontAwesomeIcons.gear, color: Colors.white, size: 28),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -106,7 +106,7 @@ class _MainmenuState extends State<Mainmenu> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.play_arrow, size: 28),
+                              Icon(FontAwesomeIcons.play, size: 28),
                               SizedBox(width: 12),
                               Text(
                                 'Oyuna Başla',
@@ -142,7 +142,8 @@ class _MainmenuState extends State<Mainmenu> {
                               },
                               child: Padding(
                                 padding: const EdgeInsets.all(12.0),
-                                child: Icon(Icons.bar_chart, size: 28),
+                                child: Icon(FontAwesomeIcons.chartSimple,
+                                    size: 28),
                               ),
                             ),
                           ),
@@ -167,7 +168,8 @@ class _MainmenuState extends State<Mainmenu> {
                               },
                               child: Padding(
                                 padding: const EdgeInsets.all(12.0),
-                                child: Icon(Icons.help_outline, size: 28),
+                                child:
+                                    Icon(FontAwesomeIcons.question, size: 28),
                               ),
                             ),
                           ),

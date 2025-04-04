@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:carpim_tablosu/mainmenu.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AgeSelectionScreen extends StatefulWidget {
   @override
@@ -90,7 +91,7 @@ class _AgeSelectionScreenState extends State<AgeSelectionScreen> {
                     ),
                     Text(
                       'Yaş Seçin',
-                      style: TextStyle(
+                      style: GoogleFonts.quicksand(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -139,6 +140,18 @@ class _AgeSelectionScreenState extends State<AgeSelectionScreen> {
     );
   }
 
+  void _navigateToMainMenu(BuildContext context, int age) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('selected_age', age);
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Mainmenu(yanlisSorular: []),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -160,8 +173,8 @@ class _AgeSelectionScreenState extends State<AgeSelectionScreen> {
               children: [
                 Text(
                   'Yaşınızı Seçin',
-                  style: TextStyle(
-                    fontSize: 28,
+                  style: GoogleFonts.quicksand(
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
@@ -206,11 +219,11 @@ class _AgeSelectionScreenState extends State<AgeSelectionScreen> {
                   ),
                   onPressed: saveAgeAndProceed,
                   child: Text(
-                    'Başla',
-                    style: TextStyle(
-                      fontSize: 20,
-                      color: Color(0xff2d2e83),
+                    'Devam Et',
+                    style: GoogleFonts.quicksand(
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
+                      color: Color(0xff2d2e83),
                     ),
                   ),
                 ),
