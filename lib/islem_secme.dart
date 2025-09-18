@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:carpim_tablosu/mainmenu.dart';
 import 'package:carpim_tablosu/quiz.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -162,6 +163,18 @@ class _IslemTuruSecimEkraniState extends State<IslemTuruSecimEkrani> {
     return Scaffold(
       backgroundColor: Color(0xff2d2e83),
       appBar: AppBar(
+        leading: IconButton(
+          highlightColor: Colors.transparent,
+            splashColor: Colors.transparent,
+
+            onPressed: () {
+            Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=>Mainmenu(yanlisSorular: [])), (Route<dynamic> route) => false);
+            },
+            icon: Icon(
+              FontAwesomeIcons.angleLeft,
+              color: Colors.white,
+            )),
+        automaticallyImplyLeading: false,
         backgroundColor: Color(0xff2d2e83),
         elevation: 0,
         title: Text(

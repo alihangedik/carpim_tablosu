@@ -14,8 +14,7 @@ class PerformansVeri {
     required this.xp,
     required this.islemTuru,
   });
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
+
 
   factory PerformansVeri.fromJson(Map<String, dynamic> json) {
     return PerformansVeri(
@@ -38,8 +37,5 @@ class PerformansVeri {
       'islemTuru': islemTuru,
     };
   }
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
+
 }

@@ -1,7 +1,7 @@
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
+
 import 'dart:convert';
 import 'dart:math';
+import 'dart:developer' as developer;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -23,19 +23,12 @@ class AIService {
     }
   }
 
-=======
-class AIService {
->>>>>>> Stashed changes
-=======
-class AIService {
->>>>>>> Stashed changes
   Future<Map<String, dynamic>> generateQuestion({
     required int yas,
     required String islemTuru,
     required String zorlukSeviyesi,
   }) async {
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
+
     try {
       Map<String, dynamic> yeniSoru;
       bool soruUygun = false;
@@ -172,6 +165,7 @@ class AIService {
           'zorlukPuani': zorlukPuani.toString(),
         };
 
+
         // Soru daha önce sorulmamışsa veya maksimum deneme sayısına ulaşıldıysa döngüden çık
         soruUygun = !_soruTekrariVarMi(yeniSoru['soru']);
         denemeSayisi++;
@@ -288,34 +282,18 @@ class AIService {
       print('İpucu üretme hatası: $e');
       return 'İşlemi adım adım yaparak çözebilirsin.';
     }
-=======
-=======
->>>>>>> Stashed changes
+  }
     // Basit soru üretme mantığı
-    return {
-      'soru': '5 x 3',
-      'cevap': '15',
-      'ipucu': '5\'i 3 kere topla',
-      'aciklama': '5 sayısını 3 kere toplarsak 15 eder',
-      'zorlukPuani': '1',
-    };
-  }
 
-  Future<String> getHint(String soru, String islemTuru) async {
-    return 'Sayıları adım adım toplayarak veya çarparak sonuca ulaşabilirsin.';
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-  }
+
+
 
   Future<String> getExplanation(
     String soru,
     String cevap,
     String islemTuru,
   ) async {
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
+
     try {
       if (apiKey == null) {
         return 'Sorunun çözümü: $cevap';
@@ -393,8 +371,12 @@ class AIService {
   }
 
   Map<String, dynamic> _generateBasicQuestion(String islemTuru) {
-    final sayi1 = 1 + (DateTime.now().millisecondsSinceEpoch % 9);
-    final sayi2 = 1 + (DateTime.now().microsecondsSinceEpoch % 9);
+    final sayi1 = 1 + (DateTime
+        .now()
+        .millisecondsSinceEpoch % 9);
+    final sayi2 = 1 + (DateTime
+        .now()
+        .microsecondsSinceEpoch % 9);
 
     String islem;
     String cevap;
@@ -435,11 +417,6 @@ class AIService {
       'aciklama': 'Basit bir $islemTuru işlemi',
       'zorlukPuani': '1',
     };
-=======
-    return 'Bu soruyu çözmek için sayıları basamak basamak işleme tabi tutabilirsin.';
->>>>>>> Stashed changes
-=======
-    return 'Bu soruyu çözmek için sayıları basamak basamak işleme tabi tutabilirsin.';
->>>>>>> Stashed changes
+
   }
 }

@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
+
 import '../models/level_system.dart';
 
 class LevelProgressBar extends StatelessWidget {
@@ -19,33 +14,30 @@ class LevelProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-    final progress = levelSystem.currentXP / levelSystem.requiredXP;
-    final isMaxLevel = levelSystem.currentLevel >= 50;
+    final bool isMaxLevel = levelSystem.currentLevel >= 50;
+    final double required = levelSystem.requiredXP == 0 ? 1 : levelSystem.requiredXP.toDouble();
+    final double progress = (levelSystem.currentXP.toDouble() / required).clamp(0.0, 1.0);
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(15),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Icon(
+                const Icon(
                   FontAwesomeIcons.solidStar,
                   color: Color(0xffFFD700),
                   size: 12,
                 ),
-                SizedBox(width: 4),
+                const SizedBox(width: 4),
                 Text(
                   'Seviye ${levelSystem.currentLevel}',
                   style: GoogleFonts.quicksand(
@@ -58,7 +50,7 @@ class LevelProgressBar extends StatelessWidget {
             ),
           ),
           if (!isMaxLevel) ...[
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Container(
               width: 100,
               height: 4,
@@ -68,10 +60,10 @@ class LevelProgressBar extends StatelessWidget {
               ),
               child: FractionallySizedBox(
                 alignment: Alignment.centerLeft,
-                widthFactor: progress.clamp(0.0, 1.0),
+                widthFactor: progress,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Color(0xffFFD700),
+                    color: const Color(0xffFFD700),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -80,72 +72,6 @@ class LevelProgressBar extends StatelessWidget {
           ],
         ],
       ),
-=======
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 80,
-          height: 8,
-          margin: EdgeInsets.symmetric(horizontal: 8),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: levelSystem.getProgress(),
-              backgroundColor: Colors.transparent,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                Color(0xffFFD700),
-              ),
-            ),
-          ),
-        ),
-        Text(
-          'Lvl ${levelSystem.currentLevel}',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
->>>>>>> Stashed changes
-=======
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 80,
-          height: 8,
-          margin: EdgeInsets.symmetric(horizontal: 8),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: levelSystem.getProgress(),
-              backgroundColor: Colors.transparent,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                Color(0xffFFD700),
-              ),
-            ),
-          ),
-        ),
-        Text(
-          'Lvl ${levelSystem.currentLevel}',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
->>>>>>> Stashed changes
     );
   }
 }

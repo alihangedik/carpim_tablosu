@@ -1,13 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 import 'age_selection.dart';
 import 'screens/legal_consent_screen.dart';
 import 'mainmenu.dart';
@@ -34,50 +27,20 @@ class KidsApp extends StatelessWidget {
     required this.hasGivenConsent,
     this.selectedAge,
   }) : super(key: key);
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-=======
->>>>>>> Stashed changes
-=======
-import 'quiz.dart';
 
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  runApp(const KidsApp());
-}
 
-class KidsApp extends StatelessWidget {
-  const KidsApp({Key? key}) : super(key: key);
->>>>>>> Stashed changes
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
+
+
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Çarpım Tablosu',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+      title: 'Dört İşlem',
+      theme: ThemeData.dark(
       ),
-<<<<<<< Updated upstream
-      home: _getInitialScreen(),
-=======
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-      home: _getInitialScreen(),
-=======
-      home: const QuizScreen(),
->>>>>>> Stashed changes
->>>>>>> Stashed changes
-=======
-      home: const QuizScreen(),
->>>>>>> Stashed changes
->>>>>>> Stashed changes
+
+      home:  _getInitialScreen(),
     );
   }
 

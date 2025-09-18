@@ -1,7 +1,10 @@
+import 'package:carpim_tablosu/button.dart';
 import 'package:carpim_tablosu/carpim_tablosu.dart';
 import 'package:carpim_tablosu/statistics_screen.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:carpim_tablosu/settings_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -53,10 +56,9 @@ class _MainmenuState extends State<Mainmenu> {
             child: IconButton(
               icon: Icon(FontAwesomeIcons.gear, color: Colors.white, size: 28),
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SettingsScreen()),
-                );
+               showCupertinoSheet(context: context, pageBuilder: (context){
+                 return SettingsScreen();
+               });
               },
             ),
           ),
@@ -67,109 +69,137 @@ class _MainmenuState extends State<Mainmenu> {
                 Expanded(
                   flex: 2,
                   child: Center(
-                    child: ColorFiltered(
-                      colorFilter: ColorFilter.mode(
-                        Colors.white,
-                        BlendMode.srcIn,
-                      ),
+
+
                       child: Image.asset(
-                        'assets/carpim_tablosu.png',
-                        width: 280,
+                        'assets/dort_islem_new.png',
+                        width: 400,
                       ),
-                    ),
+
                   ),
                 ),
                 Expanded(
-                  flex: 3,
+                  flex: 1,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       SizedBox(
                         width: double.infinity,
                         height: 60,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Color(0xff2d2e83),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            elevation: 5,
+                        child: LiquidGlass(
+                          glassContainsChild: false,
+                          shape: LiquidRoundedSuperellipse(
+
+                              borderRadius: Radius.circular(15)),
+                          settings: LiquidGlassSettings(
+
+                            blur: 4
                           ),
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => IslemTuruSecimEkrani(),
+                          child:ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
                               ),
-                            );
-                          },
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(FontAwesomeIcons.play, size: 28),
-                              SizedBox(width: 12),
-                              Text(
-                                'Oyuna Başla',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
+                              elevation: 0,
+                            ),
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => IslemTuruSecimEkrani(),
                                 ),
-                              ),
-                            ],
+                              );
+                            },
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(FontAwesomeIcons.play, size: 28),
+                                SizedBox(width: 12),
+                                Text(
+                                  'Oyuna Başla',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
+
                       ),
                       SizedBox(height: 20),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white.withOpacity(0.2),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                elevation: 0,
+                            child: LiquidGlass(
+                              glassContainsChild: false,
+                              shape: LiquidRoundedSuperellipse(
+
+                                  borderRadius: Radius.circular(15)),
+                              settings: LiquidGlassSettings(
+
+                                  blur: 4
                               ),
-                              onPressed: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => StatisticsScreen(),
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
                                   ),
-                                );
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: Icon(FontAwesomeIcons.chartSimple,
-                                    size: 28),
+                                  elevation: 0,
+                                ),
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) => StatisticsScreen(),
+                                    ),
+                                  );
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Icon(FontAwesomeIcons.chartSimple,
+                                      size: 28),
+                                ),
                               ),
                             ),
                           ),
                           SizedBox(width: 12),
                           Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white.withOpacity(0.2),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                elevation: 0,
+                            child: LiquidGlass(
+                              glassContainsChild: false,
+                              shape: LiquidRoundedSuperellipse(
+
+                                  borderRadius: Radius.circular(15)),
+                              settings: LiquidGlassSettings(
+
+                                  blur: 4
                               ),
-                              onPressed: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        CarpimTablosuSayfasi(),
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
                                   ),
-                                );
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child:
-                                    Icon(FontAwesomeIcons.question, size: 28),
+                                  elevation: 0,
+                                ),
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          CarpimTablosuSayfasi(),
+                                    ),
+                                  );
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child:
+                                      Icon(FontAwesomeIcons.question, size: 28),
+                                ),
                               ),
                             ),
                           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lottie/lottie.dart';
 
 class LevelUpScreen extends StatelessWidget {
   final int level;
@@ -13,40 +14,27 @@ class LevelUpScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isMax = level >= 50;
+
     return Dialog(
-<<<<<<< Updated upstream
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.stars,
-              color: Color(0xffFFD700),
-              size: 64,
-            ),
-            SizedBox(height: 16),
-            Text(
-              level >= 50 ? 'Maksimum Seviyeye Ulaştın!' : 'Seviye Atladın!',
-              style: GoogleFonts.quicksand(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Color(0xff2d2e83),
-=======
       backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: Container(
-        padding: EdgeInsets.all(24),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Color(0xff2d2e83),
+          color: const Color(0xff2d2e83),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: Colors.white.withOpacity(0.2),
             width: 2,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.25),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -57,115 +45,65 @@ class LevelUpScreen extends StatelessWidget {
               height: 200,
               repeat: true,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
               'Tebrikler!',
               style: GoogleFonts.quicksand(
                 color: Colors.white,
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
               ),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-              level >= 50
-                  ? 'Tebrikler! Bu işlem türünde maksimum seviyeye ulaştın.'
-                  : 'Yeni Seviye: $level',
-              style: GoogleFonts.quicksand(
-                fontSize: 18,
-                color: Colors.black87,
-=======
-=======
->>>>>>> Stashed changes
-              'Seviye $level\'e ulaştın!',
+              isMax ? 'Maksimum Seviyeye Ulaştın!' : 'Seviye $level\'e ulaştın!',
               style: GoogleFonts.quicksand(
                 color: Colors.white,
                 fontSize: 20,
-                fontWeight: FontWeight.w500,
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
+                fontWeight: FontWeight.w600,
               ),
               textAlign: TextAlign.center,
             ),
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-            if (level < 50) ...[
-              SizedBox(height: 16),
+            if (!isMax) ...[
+              const SizedBox(height: 16),
               Text(
                 'Yeni Ödüller:',
                 style: GoogleFonts.quicksand(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: Colors.white.withOpacity(0.95),
                 ),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(
-                '• Daha yüksek zorluk seviyesi\n• Artan XP kazanımı\n• Yeni soru tipleri',
+                '• Daha yüksek zorluk seviyesi\n'
+                    '• Artan XP kazanımı\n'
+                    '• Yeni soru tipleri',
                 style: GoogleFonts.quicksand(
                   fontSize: 14,
-                  color: Colors.black87,
+                  color: Colors.white.withOpacity(0.9),
+                  height: 1.4,
                 ),
+                textAlign: TextAlign.center,
               ),
             ],
-            SizedBox(height: 20),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xff2d2e83),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-              ),
-              onPressed: onContinue,
-              child: Text(
-                'Devam Et',
-                style: GoogleFonts.quicksand(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-=======
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             ElevatedButton(
               onPressed: onContinue,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
-                foregroundColor: Color(0xff2d2e83),
-                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                foregroundColor: const Color(0xff2d2e83),
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
                 ),
+                elevation: 0,
               ),
-=======
-            SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: onContinue,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Color(0xff2d2e83),
-                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
->>>>>>> Stashed changes
               child: Text(
                 'Devam Et',
                 style: GoogleFonts.quicksand(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
                 ),
               ),
             ),

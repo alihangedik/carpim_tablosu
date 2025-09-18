@@ -1,17 +1,12 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_fonts/google_fonts.dart';
+// Aşağıdakiler başka bölümlerde kullanılabilir; durmalarında sakınca yok.
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
-import 'dart:math';
-import 'dart:convert';
+
 import './services/performance_analysis_service.dart';
 import './models/performans_veri.dart';
 
@@ -33,19 +28,17 @@ class GlowBorderPainter extends CustomPainter {
       Radius.circular(radius),
     );
 
-    // Ana border için gradient paint
     final borderGradient = LinearGradient(
       colors: [
         glowColor.withOpacity(0.05),
         glowColor.withOpacity(1),
         glowColor.withOpacity(0.05),
       ],
-      stops: [0.0, 0.5, 1.0],
+      stops: const [0.0, 0.5, 1.0],
     );
 
-    // Dış glow için paint
     final outerGlowPaint = Paint()
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 8)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8)
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke
       ..shader = borderGradient.createShader(
@@ -55,9 +48,8 @@ class GlowBorderPainter extends CustomPainter {
         ),
       );
 
-    // İç glow için paint
     final innerGlowPaint = Paint()
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4)
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke
       ..shader = borderGradient.createShader(
@@ -67,22 +59,20 @@ class GlowBorderPainter extends CustomPainter {
         ),
       );
 
-    // Ambient glow için paint
     final ambientGlowPaint = Paint()
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 12)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12)
       ..color = glowColor.withOpacity(0.05);
 
-    // Ambient glow çizimi
     canvas.drawRRect(rect.inflate(2), ambientGlowPaint);
-
-    // Ana glow efektleri
     canvas.drawRRect(rect, outerGlowPaint);
     canvas.drawRRect(rect, innerGlowPaint);
   }
 
   @override
   bool shouldRepaint(GlowBorderPainter oldDelegate) {
-    return oldDelegate.progress != progress;
+    return oldDelegate.progress != progress ||
+        oldDelegate.glowColor != glowColor ||
+        oldDelegate.radius != radius;
   }
 }
 
@@ -105,7 +95,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
     _loadStatistics();
     _glowController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 2500),
+      duration: const Duration(milliseconds: 2500),
     )..repeat(reverse: true);
   }
 
@@ -119,7 +109,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
   Future<void> _loadStatistics() async {
     final prefs = await SharedPreferences.getInstance();
 
-    // İşlem türlerini tanımla
+    // İşlem türleri: görüntü adı -> storage anahtarı
     final operations = {
       'Toplama': 'toplama',
       'Çıkarma': 'cikarma',
@@ -127,141 +117,116 @@ class _StatisticsScreenState extends State<StatisticsScreen>
       'Bölme': 'bolme'
     };
 
-    Map<String, List<PerformansVeri>> yeniPerformansVerileri = {};
-    Map<String, List<Map<String, dynamic>>> yeniYanlisSorular = {};
+    final Map<String, List<PerformansVeri>> yeniPerformansVerileri = {};
+    final Map<String, List<Map<String, dynamic>>> yeniYanlisSorular = {};
 
-    // Her işlem türü için performans verilerini yükle
     for (var entry in operations.entries) {
       final displayName = entry.key;
       final storageKey = entry.value;
 
-      // Performans verilerini yükle
+      // Performans verileri
       final performansKey = 'performans_$storageKey';
       final performansJson = prefs.getString(performansKey);
-      print('$displayName için performans JSON: $performansJson');
 
       if (performansJson != null) {
         try {
           final List<dynamic> performansList = json.decode(performansJson);
-          print(
-              '$displayName için performans listesi: ${performansList.length} kayıt');
 
-          // Günlük performans verilerini hesapla
           final Map<String, PerformansVeri> gunlukVeriler = {};
 
           for (var veri in performansList) {
             final tarih = DateTime.parse(veri['tarih'] as String);
             final tarihKey = '${tarih.year}-${tarih.month}-${tarih.day}';
 
-            // O gün için toplam doğru ve yanlış sayısını hesapla
-            if (!gunlukVeriler.containsKey(tarihKey)) {
-              gunlukVeriler[tarihKey] = PerformansVeri(
+            gunlukVeriler.putIfAbsent(
+              tarihKey,
+                  () => PerformansVeri(
                 tarih: tarih,
                 basariOrani: 0,
                 dogru: 0,
                 yanlis: 0,
                 xp: 0,
                 islemTuru: storageKey,
-              );
-            }
+              ),
+            );
 
-            final gunlukVeri = gunlukVeriler[tarihKey]!;
-            if (veri['dogru'] as bool) {
+            final g = gunlukVeriler[tarihKey]!;
+            final dogruMu = veri['dogru'] as bool;
+
+            if (dogruMu) {
               gunlukVeriler[tarihKey] = PerformansVeri(
                 tarih: tarih,
-                basariOrani: ((gunlukVeri.dogru + 1) /
-                    (gunlukVeri.dogru + gunlukVeri.yanlis + 1) *
-                    100),
-                dogru: gunlukVeri.dogru + 1,
-                yanlis: gunlukVeri.yanlis,
-                xp: gunlukVeri.xp +
-                    int.parse(veri['zorlukPuani'] as String) * 10,
+                basariOrani: ((g.dogru + 1) /
+                    (g.dogru + g.yanlis + 1) *
+                    100)
+                    .toDouble(),
+                dogru: g.dogru + 1,
+                yanlis: g.yanlis,
+                xp: g.xp + int.parse(veri['zorlukPuani'] as String) * 10,
                 islemTuru: storageKey,
               );
             } else {
               gunlukVeriler[tarihKey] = PerformansVeri(
                 tarih: tarih,
-                basariOrani: (gunlukVeri.dogru /
-                    (gunlukVeri.dogru + gunlukVeri.yanlis + 1) *
-                    100),
-                dogru: gunlukVeri.dogru,
-                yanlis: gunlukVeri.yanlis + 1,
-                xp: gunlukVeri.xp,
+                basariOrani:
+                (g.dogru / (g.dogru + g.yanlis + 1) * 100).toDouble(),
+                dogru: g.dogru,
+                yanlis: g.yanlis + 1,
+                xp: g.xp,
                 islemTuru: storageKey,
               );
             }
           }
 
-          yeniPerformansVerileri[displayName] = gunlukVeriler.values.toList();
-          print(
-              '$displayName için günlük veriler: ${gunlukVeriler.length} gün');
+          yeniPerformansVerileri[displayName] =
+          gunlukVeriler.values.toList()..sort((a, b) => a.tarih.compareTo(b.tarih));
         } catch (e) {
-          print('$displayName performans verisi yükleme hatası: $e');
+          // quietly skip broken json
+          yeniPerformansVerileri[displayName] = [];
         }
+      } else {
+        yeniPerformansVerileri[displayName] = [];
       }
 
-      // Yanlış soruları yükle
+      // Yanlış sorular
       final yanlisSorularKey = 'yanlisSorular_$storageKey';
       final yanlisList = prefs.getStringList(yanlisSorularKey) ?? [];
-      print('$displayName için yanlış sorular: ${yanlisList.length}');
 
       try {
         final List<Map<String, dynamic>> islemYanlislari = yanlisList
             .map((jsonStr) => json.decode(jsonStr) as Map<String, dynamic>)
             .toList();
-
         yeniYanlisSorular[displayName] = islemYanlislari;
       } catch (e) {
-        print('$displayName yanlış soru yükleme hatası: $e');
         yeniYanlisSorular[displayName] = [];
       }
     }
 
-    if (mounted) {
-      setState(() {
-        performansVerileri = yeniPerformansVerileri;
-        yanlisSorular = yeniYanlisSorular;
-        print(
-            'Performans verileri güncellendi: ${performansVerileri.length} işlem türü');
-        print('Yanlış sorular güncellendi: ${yanlisSorular.length} işlem türü');
-      });
-    }
+    if (!mounted) return;
+    setState(() {
+      performansVerileri = yeniPerformansVerileri;
+      yanlisSorular = yeniYanlisSorular;
+    });
   }
-=======
-import 'package:google_fonts/google_fonts.dart';
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-=======
->>>>>>> Stashed changes
-class StatisticsScreen extends StatelessWidget {
-  final List<Map<String, dynamic>> wrongAnswers;
-  final int score;
-
-  const StatisticsScreen({
-    Key? key,
-    required this.wrongAnswers,
-    required this.score,
-  }) : super(key: key);
->>>>>>> Stashed changes
-
->>>>>>> Stashed changes
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xff2d2e83),
       appBar: AppBar(
-        title: Text('İstatistikler'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text('İstatistikler', style: GoogleFonts.quicksand()),
       ),
-<<<<<<< Updated upstream
       body: Column(
         children: [
+          // Sekmeler
           Container(
             height: 50,
-            margin: EdgeInsets.only(top: 8, bottom: 20),
+            margin: const EdgeInsets.only(top: 8, bottom: 20),
             child: ListView(
               scrollDirection: Axis.horizontal,
-              padding: EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
                 _buildTabButton('Genel', 0, FontAwesomeIcons.chartSimple),
                 _buildTabButton('Toplama', 1, FontAwesomeIcons.plus),
@@ -271,13 +236,12 @@ class StatisticsScreen extends StatelessWidget {
               ],
             ),
           ),
+          // Sayfalar
           Expanded(
             child: PageView(
               controller: _pageController,
               onPageChanged: (index) {
-                setState(() {
-                  _selectedIndex = index;
-                });
+                setState(() => _selectedIndex = index);
               },
               children: [
                 _buildGenelPage(),
@@ -293,25 +257,25 @@ class StatisticsScreen extends StatelessWidget {
     );
   }
 
+  // Sekme butonu
   Widget _buildTabButton(String text, int index, IconData icon) {
-    bool isSelected = _selectedIndex == index;
+    final bool isSelected = _selectedIndex == index;
     return GestureDetector(
       onTap: () {
         setState(() {
           _selectedIndex = index;
           _pageController.animateToPage(
             index,
-            duration: Duration(milliseconds: 300),
+            duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
           );
         });
       },
       child: Container(
-        margin: EdgeInsets.only(right: 8),
-        padding: EdgeInsets.symmetric(horizontal: 16),
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color:
-              isSelected ? Colors.white.withOpacity(0.15) : Colors.transparent,
+          color: isSelected ? Colors.white.withOpacity(0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(25),
           border: Border.all(
             color: Colors.white.withOpacity(0.2),
@@ -321,15 +285,11 @@ class StatisticsScreen extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              color: Colors.white,
-              size: 20,
-            ),
-            SizedBox(width: 8),
+            Icon(icon, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
             Text(
               text,
-              style: TextStyle(
+              style: GoogleFonts.quicksand(
                 color: Colors.white,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 fontSize: 15,
@@ -341,9 +301,10 @@ class StatisticsScreen extends StatelessWidget {
     );
   }
 
+  // GENEL sayfası
   Widget _buildGenelPage() {
     return SingleChildScrollView(
-      physics: BouncingScrollPhysics(),
+      physics: const BouncingScrollPhysics(),
       child: Padding(
         padding: const EdgeInsets.only(top: 20.0, left: 20, right: 20),
         child: Column(
@@ -355,7 +316,7 @@ class StatisticsScreen extends StatelessWidget {
               ),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Container(
+                  return SizedBox(
                     height: 80,
                     child: Center(
                       child: CircularProgressIndicator(
@@ -366,11 +327,14 @@ class StatisticsScreen extends StatelessWidget {
                 }
 
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Container();
+                  return const SizedBox.shrink();
                 }
 
+                final data = snapshot.data!;
+                final yetersiz = data['baslik'] == 'Veri Yetersiz';
+
                 return Container(
-                  margin: EdgeInsets.only(bottom: 20),
+                  margin: const EdgeInsets.only(bottom: 20),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(15),
@@ -379,21 +343,21 @@ class StatisticsScreen extends StatelessWidget {
                     fit: StackFit.passthrough,
                     children: [
                       Padding(
-                        padding: EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(16),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               children: [
-                                Icon(
+                                const Icon(
                                   FontAwesomeIcons.graduationCap,
                                   color: Colors.white,
                                   size: 20,
                                 ),
-                                SizedBox(width: 8),
+                                const SizedBox(width: 8),
                                 Text(
                                   'Matematik Koçun',
-                                  style: TextStyle(
+                                  style: GoogleFonts.quicksand(
                                     color: Colors.white,
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -401,19 +365,18 @@ class StatisticsScreen extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            if (snapshot.data!['baslik'] !=
-                                'Veri Yetersiz') ...[
-                              SizedBox(height: 4),
+                            if (!yetersiz) ...[
+                              const SizedBox(height: 4),
                               Container(
-                                padding: EdgeInsets.symmetric(
+                                padding: const EdgeInsets.symmetric(
                                     horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: Colors.white.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  snapshot.data!['baslik'] ?? '',
-                                  style: TextStyle(
+                                  data['baslik'] ?? '',
+                                  style: GoogleFonts.quicksand(
                                     color: Colors.white.withOpacity(0.9),
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
@@ -421,25 +384,24 @@ class StatisticsScreen extends StatelessWidget {
                                 ),
                               ),
                             ],
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             Text(
-                              snapshot.data!['baslik'] == 'Veri Yetersiz'
+                              yetersiz
                                   ? 'Performans değerlendirmesi için en az 7 farklı günde pratik yapılması gerekiyor.'
-                                  : snapshot.data!['yorum'] ?? '',
-                              style: TextStyle(
+                                  : (data['yorum'] ?? ''),
+                              style: GoogleFonts.quicksand(
                                 color: Colors.white.withOpacity(0.9),
                                 fontSize: 14,
                                 height: 1.5,
-                                fontStyle:
-                                    snapshot.data!['baslik'] == 'Veri Yetersiz'
-                                        ? FontStyle.italic
-                                        : FontStyle.normal,
+                                fontStyle: yetersiz
+                                    ? FontStyle.italic
+                                    : FontStyle.normal,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      if (snapshot.data!['baslik'] != 'Veri Yetersiz')
+                      if (!yetersiz)
                         Positioned.fill(
                           child: IgnorePointer(
                             child: AnimatedBuilder(
@@ -449,7 +411,7 @@ class StatisticsScreen extends StatelessWidget {
                                   painter: GlowBorderPainter(
                                     progress: Curves.easeInOutSine
                                         .transform(_glowController.value),
-                                    glowColor: Color(0xFF4B4CFF),
+                                    glowColor: const Color(0xFF4B4CFF),
                                     radius: 15,
                                   ),
                                 );
@@ -464,313 +426,306 @@ class StatisticsScreen extends StatelessWidget {
             ),
             _buildStatSection(
               icon: FontAwesomeIcons.chartSimple,
-              title: 'Genel Toplam',
+              title: 'Genel Toplam (Son 7 Gün)',
               child: _buildGenelToplam(),
             ),
-            if (_tumYanlisSorular().isNotEmpty) ...[
+            if (_tumYanlisSorular().isNotEmpty)
               _buildStatSection(
                 icon: FontAwesomeIcons.exclamation,
                 title: 'Tüm Yanlış Cevaplar',
                 child: _buildTumYanlisCevaplar(),
               ),
-            ],
           ],
         ),
       ),
     );
   }
 
+  // İşlem bazlı sayfa
   Widget _buildIslemPage(String islemTuru) {
     final performansListesi = performansVerileri[islemTuru] ?? [];
     final yanlisList = yanlisSorular[islemTuru] ?? [];
 
-    // Son 7 günlük verileri hazırla
+    // Son 7 gün
     final now = DateTime.now();
     final List<PerformansVeri> gunlukVeriler = List.generate(7, (index) {
       final tarih = DateTime(now.year, now.month, now.day - (6 - index));
-      // Bu gün için veri var mı kontrol et
       final gunVeri = performansListesi.where((veri) {
-        final veriTarih = veri.tarih;
-        return veriTarih.year == tarih.year &&
-            veriTarih.month == tarih.month &&
-            veriTarih.day == tarih.day;
+        final t = veri.tarih;
+        return t.year == tarih.year && t.month == tarih.month && t.day == tarih.day;
       }).toList();
 
-      // Eğer o gün için veri varsa son veriyi al, yoksa 0 değerli veri oluştur
       return gunVeri.isNotEmpty
           ? gunVeri.last
           : PerformansVeri(
-              tarih: tarih,
-              basariOrani: 0,
-              dogru: 0,
-              yanlis: 0,
-              xp: 0,
-              islemTuru: islemTuru,
-            );
+        tarih: tarih,
+        basariOrani: 0,
+        dogru: 0,
+        yanlis: 0,
+        xp: 0,
+        islemTuru: islemTuru,
+      );
     });
 
-    // Son 7 günün toplam doğru ve yanlış sayılarını hesapla
     int toplamDogru = 0;
     int toplamYanlis = 0;
-    for (var veri in gunlukVeriler) {
-      toplamDogru += veri.dogru;
-      toplamYanlis += veri.yanlis;
+    for (var v in gunlukVeriler) {
+      toplamDogru += v.dogru;
+      toplamYanlis += v.yanlis;
     }
     final toplam = toplamDogru + toplamYanlis;
     final basariOrani = toplam > 0 ? (toplamDogru / toplam * 100) : 0.0;
 
     return SingleChildScrollView(
-      physics: BouncingScrollPhysics(),
+      physics: const BouncingScrollPhysics(),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
-=======
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
->>>>>>> Stashed changes
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildGeneralStats(),
-            SizedBox(height: 20),
-            _buildWrongAnswersList(),
+            _buildStatSection(
+              icon: FontAwesomeIcons.clipboardCheck,
+              title: '$islemTuru Özeti (Son 7 Gün)',
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildStatItem('Doğru', toplamDogru.toString(),
+                      valueColor: Colors.green),
+                  Container(
+                    width: 1,
+                    height: 40,
+                    color: Colors.white.withOpacity(0.1),
+                  ),
+                  _buildStatItem('Yanlış', toplamYanlis.toString(),
+                      valueColor: Colors.redAccent),
+                  Container(
+                    width: 1,
+                    height: 40,
+                    color: Colors.white.withOpacity(0.1),
+                  ),
+                  _buildStatItem(
+                    'Başarı',
+                    '${basariOrani.toStringAsFixed(1)}%',
+                    valueColor: Colors.amber,
+                  ),
+                ],
+              ),
+            ),
+            if (yanlisList.isNotEmpty)
+              _buildStatSection(
+                icon: FontAwesomeIcons.circleXmark,
+                title: '$islemTuru Yanlışları',
+                child: _buildYanlisCevaplar(yanlisList),
+              ),
           ],
         ),
       ),
     );
   }
 
-<<<<<<< Updated upstream
+  // GENEL — üst toplamlar
   Widget _buildGenelToplam() {
     int toplamDogru = 0;
     int toplamYanlis = 0;
     double toplamBasariOrani = 0;
     int islemSayisi = 0;
 
-    // Her işlem türü için toplam hesapla
-    performansVerileri.forEach((islemTuru, performansListesi) {
+    performansVerileri.forEach((_, performansListesi) {
       if (performansListesi.isNotEmpty) {
         islemSayisi++;
-        // Son 7 günlük verileri al
         final now = DateTime.now();
-        final son7GunlukVeriler = performansListesi.where((veri) {
+        final son7 = performansListesi.where((veri) {
           final fark = now.difference(veri.tarih).inDays;
           return fark <= 7;
         }).toList();
 
-        // Her işlem türü için son performans verilerini topla
-        if (son7GunlukVeriler.isNotEmpty) {
-          for (var veri in son7GunlukVeriler) {
-            toplamDogru += veri.dogru;
-            toplamYanlis += veri.yanlis;
+        for (var v in son7) {
+          toplamDogru += v.dogru;
+          toplamYanlis += v.yanlis;
+        }
+
+        if (son7.isNotEmpty) {
+          double islemBasari = 0;
+          for (var v in son7) {
+            islemBasari += v.basariOrani;
           }
-          // Son 7 günün ortalama başarı oranını al
-          double islemBasariOrani = 0;
-          for (var veri in son7GunlukVeriler) {
-            islemBasariOrani += veri.basariOrani;
-          }
-          toplamBasariOrani += islemBasariOrani / son7GunlukVeriler.length;
+          toplamBasariOrani += islemBasari / son7.length;
         }
       }
     });
 
-    // Ortalama başarı oranını hesapla
     final ortalamaBasariOrani =
-        islemSayisi > 0 ? toplamBasariOrani / islemSayisi : 0.0;
+    islemSayisi > 0 ? (toplamBasariOrani / islemSayisi) : 0.0;
 
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildStatItem(
-                  'Toplam Doğru', toplamDogru.toString(), Colors.green),
-              Container(
-                width: 1,
-                height: 40,
-                color: Colors.white.withOpacity(0.1),
-=======
-  Widget _buildGeneralStats() {
-    return Card(
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            Text(
-              'Genel Toplam',
-              style: GoogleFonts.quicksand(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
->>>>>>> Stashed changes
-              ),
-            ),
-            SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatItem('Toplam Skor', score.toString()),
-                _buildStatItem('Yanlış Sayısı', wrongAnswers.length.toString()),
-                _buildStatItem(
-                  'Başarı Oranı',
-                  '${((score / (score + wrongAnswers.length)) * 100).toStringAsFixed(1)}%',
-                ),
-              ],
-            ),
+            _buildStatItem('Toplam Doğru', '$toplamDogru',
+                valueColor: Colors.green),
+            
+            Container(width: 1, height: 40, color: Colors.white.withOpacity(0.1)),
+            _buildStatItem('Toplam Yanlış', '$toplamYanlis',
+                valueColor: Colors.redAccent),
+            Container(width: 1, height: 40, color: Colors.white.withOpacity(0.1)),
+            _buildStatItem('Ortalama Başarı',
+                '${ortalamaBasariOrani.toStringAsFixed(1)}%',
+                valueColor: Colors.amber),
           ],
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildWrongAnswersList() {
-    if (wrongAnswers.isEmpty) {
-      return Center(
-        child: Text(
-          'Henüz yanlış cevap yok!',
-          style: GoogleFonts.quicksand(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      );
-    }
-
-<<<<<<< Updated upstream
+  // Tüm yanlışlar (tür eklenmiş ve tarihe göre sıralı)
   List<Map<String, dynamic>> _tumYanlisSorular() {
-    List<Map<String, dynamic>> tumYanlislar = [];
-
-    yanlisSorular.forEach((islemTuru, yanlisList) {
-      for (var soru in yanlisList) {
-        soru['islemTuru'] = islemTuru; // İşlem türünü soruya ekle
-        tumYanlislar.add(soru);
+    final List<Map<String, dynamic>> tum = [];
+    yanlisSorular.forEach((islemTuru, list) {
+      for (final s in list) {
+        final copy = Map<String, dynamic>.from(s);
+        copy['islemTuru'] = islemTuru;
+        tum.add(copy);
       }
     });
-
-    // Tarihe göre sırala (en yeniden en eskiye)
-    tumYanlislar.sort((a, b) {
+    tum.sort((a, b) {
       final dateA = DateTime.parse(a['tarih'] as String);
       final dateB = DateTime.parse(b['tarih'] as String);
       return dateB.compareTo(dateA);
     });
-
-    return tumYanlislar;
+    return tum;
   }
 
   Widget _buildTumYanlisCevaplar() {
     final tumYanlislar = _tumYanlisSorular();
-
-    return SingleChildScrollView(
-      child: Column(
-        children: tumYanlislar.map((soru) {
-          return Container(
-            margin: EdgeInsets.only(bottom: 8),
-            padding: EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        soru['islemTuru']?.toString() ?? '',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 8),
-                Text(
-                  soru['soru']?.toString() ?? '',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Row(
-                  children: [
-                    Text(
-                      'Senin Cevabın: ',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 14,
-                      ),
-                    ),
-                    Text(
-                      soru['yanlisCevap']?.toString() ?? '',
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Text(
-                      'Doğru Cevap: ',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 14,
-                      ),
-                    ),
-                    Text(
-                      soru['dogruCevap']?.toString() ?? '',
-                      style: TextStyle(
-                        color: Colors.green,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                if (soru['tarih'] != null) ...[
-                  SizedBox(height: 4),
-                  Text(
-                    _formatDate(DateTime.parse(soru['tarih'] as String)),
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          );
-        }).toList(),
-      ),
+    return Column(
+      children: tumYanlislar.map((soru) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: _yanlisCevapTile(soru),
+        );
+      }).toList(),
     );
   }
 
+  // İşlem sayfasında kısa liste
+  Widget _buildYanlisCevaplar(List<Map<String, dynamic>> yanlisList) {
+    return Column(
+      children: yanlisList.take(5).map((soru) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: _yanlisCevapTile(soru),
+        );
+      }).toList(),
+    );
+  }
+
+  // Kart içeriği
+  Widget _yanlisCevapTile(Map<String, dynamic> soru) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (soru['islemTuru'] != null) ...[
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  soru['islemTuru'].toString(),
+                  style: GoogleFonts.quicksand(
+                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+        ],
+        Text(
+          (soru['soru'] ?? '').toString(),
+          style: GoogleFonts.quicksand(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Text(
+              'Senin Cevabın: ',
+              style: GoogleFonts.quicksand(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 14,
+              ),
+            ),
+            Text(
+              (soru['yanlisCevap'] ?? '').toString(),
+              style: GoogleFonts.quicksand(
+                color: Colors.red,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            Text(
+              'Doğru Cevap: ',
+              style: GoogleFonts.quicksand(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 14,
+              ),
+            ),
+            Text(
+              (soru['dogruCevap'] ?? '').toString(),
+              style: GoogleFonts.quicksand(
+                color: Colors.green,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        if (soru['tarih'] != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            _formatDate(DateTime.parse(soru['tarih'] as String)),
+            style: GoogleFonts.quicksand(
+              color: Colors.white.withOpacity(0.5),
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  // Bölüm başlığı + kutu
   Widget _buildStatSection({
     required IconData icon,
     required String title,
     required Widget child,
   }) {
     return Container(
-      margin: EdgeInsets.only(bottom: 20),
-      padding: EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.1),
         borderRadius: BorderRadius.circular(15),
@@ -781,17 +736,17 @@ class StatisticsScreen extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: EdgeInsets.all(12),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: Colors.white, size: 24),
               ),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               Text(
                 title,
-                style: TextStyle(
+                style: GoogleFonts.quicksand(
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -799,55 +754,37 @@ class StatisticsScreen extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           child,
         ],
       ),
     );
   }
 
-  Widget _buildStatItem(String label, String value, Color valueColor) {
-=======
->>>>>>> Stashed changes
+  // Basit sayı kartı
+  Widget _buildStatItem(String label, String value, {Color? valueColor}) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Yanlış Cevaplar',
+          value,
           style: GoogleFonts.quicksand(
-            fontSize: 20,
+            fontSize: 24,
             fontWeight: FontWeight.bold,
+            color: valueColor ?? Colors.white,
           ),
         ),
-        SizedBox(height: 12),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
-          itemCount: wrongAnswers.length,
-          itemBuilder: (context, index) {
-            final wrongAnswer = wrongAnswers[index];
-            return Card(
-              margin: EdgeInsets.only(bottom: 8),
-              child: ListTile(
-                title: Text(
-                  'Soru: ${wrongAnswer['question']}',
-                  style: GoogleFonts.quicksand(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                subtitle: Text(
-                  'Cevabınız: ${wrongAnswer['userAnswer']} (Doğru: ${wrongAnswer['correctAnswer']})',
-                  style: GoogleFonts.quicksand(),
-                ),
-              ),
-            );
-          },
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: GoogleFonts.quicksand(
+            fontSize: 14,
+            color: Colors.white.withOpacity(0.8),
+          ),
         ),
       ],
     );
   }
 
-<<<<<<< Updated upstream
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
@@ -863,166 +800,253 @@ class StatisticsScreen extends StatelessWidget {
     return '${date.day}/${date.month}/${date.year}';
   }
 
-  Widget _buildYanlisCevaplar(List<Map<String, dynamic>> yanlisList) {
-    return SingleChildScrollView(
-      child: Column(
-        children: yanlisList.take(5).map((soru) {
-          return Container(
-            margin: EdgeInsets.only(bottom: 8),
-            padding: EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  soru['soru']?.toString() ?? '',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Row(
-                  children: [
-                    Text(
-                      'Senin Cevabın: ',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 14,
-                      ),
-                    ),
-                    Text(
-                      soru['yanlisCevap']?.toString() ?? '',
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Text(
-                      'Doğru Cevap: ',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 14,
-                      ),
-                    ),
-                    Text(
-                      soru['dogruCevap']?.toString() ?? '',
-                      style: TextStyle(
-                        color: Colors.green,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                if (soru['tarih'] != null) ...[
-                  SizedBox(height: 4),
-                  Text(
-                    _formatDate(DateTime.parse(soru['tarih'] as String)),
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          );
-        }).toList(),
-      ),
-=======
-  Widget _buildStatItem(String label, String value) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: GoogleFonts.quicksand(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.blue,
-          ),
-        ),
-        SizedBox(height: 4),
-        Text(
-          label,
-          style: GoogleFonts.quicksand(
-            fontSize: 14,
-            color: Colors.grey[600],
-          ),
-        ),
-      ],
->>>>>>> Stashed changes
-    );
-  }
-
+  // (İsteğe bağlı) Toplamlar hesap yardımcıları:
   int _calculateTotalCorrect() {
     int toplamDogru = 0;
-    performansVerileri.forEach((islemTuru, performansListesi) {
-      if (performansListesi.isNotEmpty) {
-        final now = DateTime.now();
-        final son7GunlukVeriler = performansListesi.where((veri) {
-          final fark = now.difference(veri.tarih).inDays;
-          return fark <= 7;
-        }).toList();
-
-        for (var veri in son7GunlukVeriler) {
-          toplamDogru += veri.dogru;
-        }
-      }
+    performansVerileri.forEach((_, list) {
+      final now = DateTime.now();
+      final son7 = list.where((v) => now.difference(v.tarih).inDays <= 7);
+      for (var v in son7) toplamDogru += v.dogru;
     });
     return toplamDogru;
   }
 
   int _calculateTotalWrong() {
     int toplamYanlis = 0;
-    performansVerileri.forEach((islemTuru, performansListesi) {
-      if (performansListesi.isNotEmpty) {
-        final now = DateTime.now();
-        final son7GunlukVeriler = performansListesi.where((veri) {
-          final fark = now.difference(veri.tarih).inDays;
-          return fark <= 7;
-        }).toList();
-
-        for (var veri in son7GunlukVeriler) {
-          toplamYanlis += veri.yanlis;
-        }
-      }
+    performansVerileri.forEach((_, list) {
+      final now = DateTime.now();
+      final son7 = list.where((v) => now.difference(v.tarih).inDays <= 7);
+      for (var v in son7) toplamYanlis += v.yanlis;
     });
     return toplamYanlis;
   }
 
   double _calculateAverageSuccess() {
-    double toplamBasariOrani = 0;
+    double toplamBasari = 0;
     int islemSayisi = 0;
 
-    performansVerileri.forEach((islemTuru, performansListesi) {
-      if (performansListesi.isNotEmpty) {
-        islemSayisi++;
-        final now = DateTime.now();
-        final son7GunlukVeriler = performansListesi.where((veri) {
-          final fark = now.difference(veri.tarih).inDays;
-          return fark <= 7;
-        }).toList();
-
-        if (son7GunlukVeriler.isNotEmpty) {
-          double islemBasariOrani = 0;
-          for (var veri in son7GunlukVeriler) {
-            islemBasariOrani += veri.basariOrani;
-          }
-          toplamBasariOrani += islemBasariOrani / son7GunlukVeriler.length;
-        }
-      }
+    performansVerileri.forEach((_, list) {
+      if (list.isEmpty) return;
+      islemSayisi++;
+      final now = DateTime.now();
+      final son7 = list.where((v) => now.difference(v.tarih).inDays <= 7).toList();
+      if (son7.isEmpty) return;
+      double ort = 0;
+      for (var v in son7) ort += v.basariOrani;
+      toplamBasari += (ort / son7.length);
     });
 
-    return islemSayisi > 0 ? toplamBasariOrani / islemSayisi : 0.0;
+    return islemSayisi > 0 ? (toplamBasari / islemSayisi) : 0.0;
   }
+}
+
+
+// == GRAFİK YARDIMCILARI ==
+
+List<PerformansVeri> _last7DaysSeries(List<PerformansVeri> list) {
+  final now = DateTime.now();
+  return List.generate(7, (i) {
+    final d = DateTime(now.year, now.month, now.day - (6 - i));
+    final inDay = list.where((v) =>
+    v.tarih.year == d.year && v.tarih.month == d.month && v.tarih.day == d.day);
+    return inDay.isNotEmpty
+        ? inDay.last
+        : PerformansVeri(
+      tarih: d,
+      basariOrani: 0,
+      dogru: 0,
+      yanlis: 0,
+      xp: 0,
+      islemTuru: '',
+    );
+  });
+}
+
+// Tek serilik haftalık başarı çizgisi (0-100%)
+Widget buildWeeklySuccessLineChart(List<PerformansVeri> gunlukVeriler) {
+  final spots = <FlSpot>[];
+  for (int i = 0; i < gunlukVeriler.length; i++) {
+    final y = gunlukVeriler[i].basariOrani.clamp(0, 100).toDouble();
+    spots.add(FlSpot(i.toDouble(), y));
+  }
+
+  return SizedBox(
+    height: 180,
+    child: LineChart(
+      LineChartData(
+        minX: 0, maxX: 6, minY: 0, maxY: 100,
+        gridData: FlGridData(
+          show: true, drawVerticalLine: false, horizontalInterval: 20,
+          getDrawingHorizontalLine: (_) => FlLine(
+            color: Colors.white.withOpacity(0.10), strokeWidth: 1,
+          ),
+        ),
+        titlesData: FlTitlesData(
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true, reservedSize: 28, interval: 20,
+              getTitlesWidget: (v, __) => Text(
+                '${v.toInt()}',
+                style: TextStyle(color: Colors.white.withOpacity(.7), fontSize: 10),
+              ),
+            ),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true, reservedSize: 22,
+              getTitlesWidget: (v, __) {
+                const labels = ['Pzt','Sal','Çar','Per','Cum','Cts','Paz'];
+                final i = v.toInt().clamp(0, 6);
+                return Text(labels[i],
+                    style: TextStyle(color: Colors.white.withOpacity(.7), fontSize: 10));
+              },
+            ),
+          ),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        borderData: FlBorderData(show: false),
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            barWidth: 3,
+            color: const Color(0xff4B4CFF),
+            dotData: FlDotData(show: false),
+            belowBarData: BarAreaData(
+              show: true,
+              color: const Color(0xff4B4CFF).withOpacity(0.15),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+// Doğru/Yanlış donut
+Widget buildCorrectWrongDonut(int correct, int wrong) {
+  final total = (correct + wrong);
+  final correctPerc = total == 0 ? 0.0 : correct / total;
+  final wrongPerc = total == 0 ? 0.0 : wrong / total;
+
+  return SizedBox(
+    height: 160,
+    child: Stack(
+      alignment: Alignment.center,
+      children: [
+        PieChart(
+          PieChartData(
+            sectionsSpace: 2,
+            centerSpaceRadius: 45,
+            startDegreeOffset: -90,
+            sections: [
+              PieChartSectionData(
+                value: correct.toDouble(),
+                title: '',
+                color: Colors.greenAccent.withOpacity(.85),
+                radius: 42,
+              ),
+              PieChartSectionData(
+                value: wrong.toDouble(),
+                title: '',
+                color: Colors.redAccent.withOpacity(.85),
+                radius: 42,
+              ),
+            ],
+          ),
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '${(correctPerc * 100).toStringAsFixed(0)}%',
+              style: GoogleFonts.quicksand(
+                  color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+            Text(
+              'Başarı',
+              style: GoogleFonts.quicksand(
+                  color: Colors.white.withOpacity(.8), fontSize: 12),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+// GENEL için haftalık ortalama başarı çizgisi (tüm işlemlerin ortalaması)
+Widget buildOverallWeeklyLine(Map<String, List<PerformansVeri>> data) {
+  // Her gün için tüm işlemlerin basariOrani ortalaması
+  final now = DateTime.now();
+  final List<double> dailyAvg = List.generate(7, (i) {
+    final d = DateTime(now.year, now.month, now.day - (6 - i));
+    double sum = 0; int count = 0;
+    data.forEach((_, list) {
+      final match = list.where((v) =>
+      v.tarih.year == d.year && v.tarih.month == d.month && v.tarih.day == d.day);
+      if (match.isNotEmpty) {
+        sum += match.last.basariOrani; count++;
+      }
+    });
+    return count == 0 ? 0 : (sum / count);
+  });
+
+  final spots = [
+    for (int i = 0; i < dailyAvg.length; i++)
+      FlSpot(i.toDouble(), dailyAvg[i].clamp(0, 100).toDouble())
+  ];
+
+  return SizedBox(
+    height: 180,
+    child: LineChart(
+      LineChartData(
+        minX: 0, maxX: 6, minY: 0, maxY: 100,
+        gridData: FlGridData(
+          show: true, drawVerticalLine: false, horizontalInterval: 20,
+          getDrawingHorizontalLine: (_) => FlLine(
+            color: Colors.white.withOpacity(0.10), strokeWidth: 1,
+          ),
+        ),
+        titlesData: FlTitlesData(
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true, reservedSize: 28, interval: 20,
+              getTitlesWidget: (v, __) => Text(
+                '${v.toInt()}', style: TextStyle(color: Colors.white.withOpacity(.7), fontSize: 10),
+              ),
+            ),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true, reservedSize: 22,
+              getTitlesWidget: (v, __) {
+                const labels = ['Pzt','Sal','Çar','Per','Cum','Cts','Paz'];
+                final i = v.toInt().clamp(0, 6);
+                return Text(labels[i],
+                    style: TextStyle(color: Colors.white.withOpacity(.7), fontSize: 10));
+              },
+            ),
+          ),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        borderData: FlBorderData(show: false),
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            barWidth: 3,
+            color: const Color(0xffEC38BC),
+            dotData: FlDotData(show: false),
+            belowBarData: BarAreaData(
+              show: true,
+              color: const Color(0xffEC38BC).withOpacity(0.15),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

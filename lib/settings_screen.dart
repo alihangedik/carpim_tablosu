@@ -56,7 +56,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (e) {
       print('Uygulama bilgileri yüklenirken hata: $e');
       setState(() {
-        _appVersion = '1.0.0';
+        _appVersion = '2.0';
         _buildNumber = '1';
       });
     }
@@ -113,7 +113,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: 'Uygulama Bilgileri',
                 child: Column(
                   children: [
-                    _buildInfoTile('Sürüm', 'v$_appVersion'),
+                    _buildInfoTile('Sürüm', 'v2.0'),
                     Divider(color: Colors.white.withOpacity(0.1)),
                     _buildInfoTile('Geliştirici', 'Alihan Gedik'),
                   ],
